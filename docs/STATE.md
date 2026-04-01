@@ -1,6 +1,6 @@
 # {{PROJECT_NAME}} — Project State
 
-> Auto-injected at session start via UserPromptSubmit hook.
+> Reference this file at the start of each session for context.
 > Update after each phase milestone.
 
 ---

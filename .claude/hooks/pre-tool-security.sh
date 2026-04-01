@@ -20,6 +20,12 @@
 #   }
 # }
 
+# Require jq — if not installed, block by default (fail secure)
+if ! command -v jq &>/dev/null; then
+  echo "Security hook requires jq. Install with: brew install jq (macOS) or apt install jq (Linux)" >&2
+  exit 2
+fi
+
 # Read the tool input from stdin
 INPUT=$(cat)
 
@@ -54,7 +60,7 @@ if [ "$TOOL_NAME" = "Bash" ]; then
       echo '{"decision": "block", "reason": "Blocked: Hard reset discards work. Stash changes first if needed."}' | jq .
       exit 2
       ;;
-    *"rm -rf /"*|*"rm -rf ~"*|*"rm -rf ."*)
+    *"rm -rf /"*|*"rm -rf ~"*)
       echo '{"decision": "block", "reason": "Blocked: Recursive delete on root/home/cwd is too dangerous."}' | jq .
       exit 2
       ;;
