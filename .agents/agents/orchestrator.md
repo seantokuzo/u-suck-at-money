@@ -55,7 +55,8 @@ For each task, spawn the appropriate specialist agent:
 ### 5. PR Review Pipeline
 After each worker creates a PR, the **review pipeline** is mandatory:
 - Read `.agents/skills/pr-review-pipeline/SKILL.md` for the full workflow
-- Wait for Copilot + Claude Code Action reviews
+- Trigger @claude and @codex reviews via PR comments
+- Wait for Copilot + @claude + @codex reviews
 - Address ALL comments, push fixes, reply inline to each comment
 - Apply smart threshold logic for additional rounds vs. merge
 - After a clean round or threshold met, **merge the PR**
@@ -104,7 +105,8 @@ Constraints:
 
 After PR creation, run the review pipeline:
 - Read .agents/skills/pr-review-pipeline/SKILL.md
-- Wait for Copilot + Claude Code Action reviews
+- Trigger @claude and @codex reviews via PR comments
+- Wait for Copilot + @claude + @codex reviews
 - Address all comments, push fixes, reply inline
 - Apply smart thresholds for merge eligibility
 - Merge via `gh pr merge --merge --delete-branch` and pull to main

@@ -6,7 +6,7 @@ applyTo: "**/*"
 
 ## Comment Categorization
 
-When Copilot or Claude Code Action reviews a PR, categorize each comment:
+When reviewers (Copilot, @claude, @codex) comment on a PR, categorize each comment:
 
 | Category | Action | When to Use |
 |----------|--------|-------------|

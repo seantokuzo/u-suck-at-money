@@ -38,8 +38,7 @@ get-sean-done/
 │   │   ├── github.instructions.md         # Branch, commit, PR conventions
 │   │   └── pr-review.instructions.md      # How to handle review comments
 │   ├── workflows/
-│   │   ├── ci.yml                         # Template CI pipeline
-│   │   └── claude-review.yml              # Claude Code Action auto-review
+│   │   └── ci.yml                         # Template CI pipeline
 │   ├── PULL_REQUEST_TEMPLATE.md           # Standardized PR format
 │   └── copilot-instructions.md            # Copilot personality & context
 ├── .claude/
@@ -86,7 +85,7 @@ PLAN → RESEARCH → EXECUTE → REVIEW → MERGE → REPEAT
 2. **Claude decomposes** — The orchestrator breaks work into atomic tasks grouped by dependency waves
 3. **Specialists execute** — Each wave spawns parallel subagents (frontend, backend, etc.) with fresh context
 4. **Quality gates** — Code compiles, tests pass, conventions followed, CI green
-5. **PR + dual review** — Copilot and Claude Code Action both review automatically
+5. **PR + triple review** — @claude + @codex via PR comments, plus Copilot auto-review
 6. **Smart merge** — Comments addressed, thresholds met, auto-merge after clean rounds
 7. **Rinse and repeat** — Update the plan, move to next phase
 
@@ -185,9 +184,9 @@ Shell scripts that run automatically on Claude Code events:
 
 Rules in `.claude/rules/` only activate when Claude reads files matching the path pattern. Frontend rules fire for frontend code, backend rules fire for backend code. No wasted context.
 
-### Dual AI Review
+### Triple AI Review
 
-Every PR gets reviewed by **both Copilot and Claude Code Action**. Smart thresholds based on PR size determine when to request additional rounds vs. merge. Minimum 3 rounds ensures thoroughness.
+Every PR gets reviewed by **three AI reviewers** — Copilot (auto), @claude, and @codex — all on your GitHub Copilot subscription. Smart thresholds based on PR size determine when to request additional rounds vs. merge. Minimum 3 rounds ensures thoroughness. Zero Anthropic API cost for reviews.
 
 ---
 

@@ -128,13 +128,13 @@ If Claude tries to expand scope, redirect: _"That's out of scope for this phase.
 When Claude creates a PR:
 
 1. **Claude creates the PR** with full description, labels, and testing instructions
-2. **Copilot auto-reviews** (if configured in GitHub settings)
-3. **Claude Code Action auto-reviews** (via GitHub Action)
+2. **Copilot auto-reviews** (configured in GitHub settings)
+3. **@claude and @codex triggered via PR comments** (all on Copilot subscription)
 4. **Claude addresses all comments** — fixes, replies inline, pushes
 5. **Smart threshold check** — merge if clean or under threshold
 6. **Claude merges** and pulls to main
 
-Your involvement: **Minimal.** Check the PR if you want, but the dual AI review pipeline handles quality. You should review:
+Your involvement: **Minimal.** Check the PR if you want, but the triple AI review pipeline handles quality. You should review:
 - Architecture decisions (is this the right approach?)
 - Anything that touches security or auth
 - Changes that feel too large (should they be split?)

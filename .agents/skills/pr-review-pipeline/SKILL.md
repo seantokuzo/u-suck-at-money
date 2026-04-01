@@ -1,6 +1,6 @@
 ---
 name: pr-review-pipeline
-description: Automated dual-reviewer PR pipeline — Copilot + Claude Code Action reviews with smart merge thresholds. Polls for comments, addresses them, replies inline, and loops until clean. Run after every PR creation.
+description: Automated triple-reviewer PR pipeline — Copilot auto-review + @claude + @codex triggers (all on Copilot subscription) with smart merge thresholds. Polls for comments, addresses them, replies inline, and loops until clean. Run after every PR creation.
 ---
 
 # PR Review Pipeline
@@ -13,34 +13,63 @@ Automated multi-round, multi-reviewer code review workflow. After creating a PR,
 
 ## Reviewers
 
-| Reviewer | How It Triggers | Type |
-|----------|----------------|------|
-| **GitHub Copilot** | Auto-requested via GitHub settings (configure in repo Settings > Copilot > Code Review) | GitHub-native |
-| **Claude Code Action** | Auto-triggered via `.github/workflows/claude-review.yml` on PR events | GitHub Action |
+All three reviewers run on your **GitHub Copilot subscription** — zero Anthropic API cost.
 
-Both reviewers run on every PR. You get two independent AI perspectives.
+| Reviewer | How It Triggers | What It's Good At |
+|----------|----------------|-------------------|
+| **GitHub Copilot** | Auto-requested via repo settings | General code quality, patterns, bugs |
+| **@claude** | Comment posted on PR by agent | Deep reasoning, security, architecture |
+| **@codex** | Comment posted on PR by agent | Performance, optimization, code smells |
+
+### Setup: Enable Copilot Auto-Review
+
+In your GitHub repo: **Settings > Copilot > Code Review > Enable automatic review requests**
+
+This makes Copilot auto-review every PR. The `@claude` and `@codex` reviews are triggered by comments posted as part of this pipeline.
 
 ## Pipeline Steps
 
-### Step 1: Wait for Reviews
+### Step 1: Trigger All Reviewers
 
-Both reviewers are triggered automatically. Wait for them to post comments.
+After creating the PR, immediately post comments to trigger the additional reviewers:
 
 ```bash
-# Poll every 30s for up to 4 minutes (both reviewers need time)
-for i in {1..8}; do
+# Copilot auto-reviews (already triggered by PR creation if configured)
+
+# Trigger @claude review (uses Copilot subscription)
+gh pr comment {PR_NUMBER} --body "@claude Review this entire PR. Focus on:
+- Bugs and logic errors
+- Security vulnerabilities
+- Adherence to project conventions in CLAUDE.md
+- Missing error handling or edge cases"
+
+# Trigger @codex review (uses Copilot subscription)
+gh pr comment {PR_NUMBER} --body "@codex Review this entire PR. Focus on:
+- Performance issues and optimization opportunities
+- Code smells and maintainability
+- Unused code or imports
+- Type safety concerns"
+```
+
+### Step 2: Wait for Reviews
+
+All three reviewers need time to analyze the PR.
+
+```bash
+# Poll every 30s for up to 5 minutes (three reviewers need time)
+for i in {1..10}; do
   COMMENTS=$(gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/comments --jq 'length')
   REVIEWS=$(gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/reviews --jq 'length')
   if [ "$COMMENTS" -gt 0 ] || [ "$REVIEWS" -gt 0 ]; then
     echo "Found $COMMENTS inline comments and $REVIEWS reviews"
     break
   fi
-  echo "Waiting for reviews... (attempt $i/8)"
+  echo "Waiting for reviews... (attempt $i/10)"
   sleep 30
 done
 ```
 
-### Step 2: Read All Comments
+### Step 3: Read All Comments
 
 ```bash
 # Get all review comments (inline on diff)
@@ -50,7 +79,7 @@ gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/comments \
 
 Focus on **top-level comments only** (not replies from previous fix rounds).
 
-### Step 3: Calculate Smart Threshold
+### Step 4: Calculate Smart Threshold
 
 Determine the comment threshold based on PR size:
 
@@ -77,7 +106,7 @@ fi
 echo "PR size: $SIZE ($TOTAL_LINES lines, $CHANGED_FILES files) — threshold: $THRESHOLD comments"
 ```
 
-### Step 4: Categorize & Fix Every Comment
+### Step 5: Categorize & Fix Every Comment
 
 For each comment, categorize and act:
 
@@ -95,7 +124,7 @@ For each comment, categorize and act:
 4. Does the fix add complexity for marginal benefit?
 5. Would a human reviewer with full project context make this same comment?
 
-### Step 5: Build Verify
+### Step 6: Build Verify
 
 After all fixes, verify nothing is broken:
 
@@ -104,7 +133,7 @@ After all fixes, verify nothing is broken:
 # See .github/instructions/ci.instructions.md for project-specific commands
 ```
 
-### Step 6: Commit and Push
+### Step 7: Commit and Push
 
 ```bash
 git add -A && git commit -m "$(cat <<'EOF'
@@ -116,7 +145,7 @@ EOF
 git push origin {BRANCH}
 ```
 
-### Step 7: Reply Inline to Every Comment
+### Step 8: Reply Inline to Every Comment
 
 Reply to EACH comment in its own thread (never as unlinked PR comments):
 
@@ -134,7 +163,7 @@ gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies 
   -f body="Deferred — tracked as GitHub Issue for future work"
 ```
 
-### Step 8: Smart Threshold Check
+### Step 9: Smart Threshold Check
 
 After addressing all comments, check whether to request another round:
 
@@ -147,19 +176,22 @@ elif [ "$ROUND_COMMENTS" -le "$THRESHOLD" ]; then
   echo "Under threshold ($ROUND_COMMENTS <= $THRESHOLD) — address and proceed"
 else
   echo "Over threshold ($ROUND_COMMENTS > $THRESHOLD) — requesting another review round"
-  # Push fixes will auto-trigger new reviews
+  # Push fixes will auto-trigger Copilot re-review
+  # Re-trigger @claude and @codex for fresh review of fixes:
+  gh pr comment {PR_NUMBER} --body "@claude Review the latest changes addressing previous review comments."
+  gh pr comment {PR_NUMBER} --body "@codex Review the latest changes addressing previous review comments."
 fi
 ```
 
-### Step 9: Repeat (Minimum 3 Rounds)
+### Step 10: Repeat (Minimum 3 Rounds)
 
 The pipeline requires a **minimum of 3 rounds** before merge is eligible:
 
-| Round | Expected Reviewers | Purpose |
-|-------|-------------------|---------|
-| 1 | Copilot + Claude Code Action | Initial review — catch bugs, security, style |
-| 2 | Copilot + Claude Code Action | Review fixes, catch new issues from changes |
-| 3+ | As needed | Final polish, edge cases |
+| Round | Reviewers | Purpose |
+|-------|-----------|---------|
+| 1 | Copilot + @claude + @codex | Initial review — three AI perspectives |
+| 2 | Copilot (auto) + @claude/@codex (if over threshold) | Review fixes, catch regressions |
+| 3+ | As needed based on threshold | Final polish |
 
 **Merge eligibility:**
 - Minimum 3 rounds completed
@@ -169,7 +201,7 @@ The pipeline requires a **minimum of 3 rounds** before merge is eligible:
 
 If still getting significant comments after round 3, report to user with summary.
 
-### Step 10: Merge
+### Step 11: Merge
 
 After merge eligibility is met:
 
@@ -187,7 +219,7 @@ Report the result:
 
 ```
 PR #{NUMBER} merged after {N} review rounds:
-- Round 1: {X} comments (Copilot: {a}, Claude: {b})
+- Round 1: {X} comments (Copilot: {a}, @claude: {b}, @codex: {c})
 - Round 2: {Y} comments addressed
 - Round 3: Clean pass → merged
 - PR size: {SIZE} ({LINES} lines, {FILES} files), threshold: {THRESHOLD}
@@ -220,4 +252,10 @@ gh pr view {PR} --json mergeable,mergeStateStatus,statusCheckRollup
 
 # Get PR size stats
 gh pr view {PR} --json additions,deletions,changedFiles
+
+# Trigger @claude review
+gh pr comment {PR} --body "@claude Review this PR for bugs and security issues"
+
+# Trigger @codex review
+gh pr comment {PR} --body "@codex Review this PR for performance and code quality"
 ```
