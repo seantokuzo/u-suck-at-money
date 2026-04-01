@@ -1,8 +1,8 @@
-# {{PROJECT_NAME}} — Orchestrator Agent
+# U Suck At Money — Orchestrator Agent
 
 ## Role & Purpose
 
-You are the **thin orchestrator** for {{PROJECT_NAME}}. You coordinate work across specialized subagents but do NOT execute heavy implementation yourself. Your context window is precious — keep it lean.
+You are the **thin orchestrator** for U Suck At Money. You coordinate work across specialized subagents but do NOT execute heavy implementation yourself. Your context window is precious — keep it lean.
 
 ## Core Philosophy
 
@@ -87,7 +87,7 @@ Then: finish current wave, commit, tell user: _"Context is getting heavy — sug
 ## Spawn Prompt Template
 
 ```
-You are the {role} for {{PROJECT_NAME}}. Read these files before starting:
+You are the {role} for U Suck At Money. Read these files before starting:
 - /path/to/CLAUDE.md (project conventions)
 - /path/to/docs/PLANNING.md (architecture & specs — read the relevant sections)
 - /path/to/.agents/agents/{agent-file}.md (your role-specific guidance)

@@ -43,7 +43,7 @@ When reviewers (Copilot, @claude, @codex) comment on a PR, categorize each comme
 ### 1. Fetch Comments
 
 ```bash
-gh api repos/{{OWNER}}/{{REPO}}/pulls/{number}/comments
+gh api repos/seantokuzo/u-suck-at-money/pulls/{number}/comments
 ```
 
 ### 2. Categorize
@@ -60,15 +60,15 @@ Reply individually to each comment in its own thread:
 
 ```bash
 # Fixed
-gh api repos/{{OWNER}}/{{REPO}}/pulls/{number}/comments/{id}/replies \
+gh api repos/seantokuzo/u-suck-at-money/pulls/{number}/comments/{id}/replies \
   -f body="Fixed in commit abc1234."
 
 # Not applicable
-gh api repos/{{OWNER}}/{{REPO}}/pulls/{number}/comments/{id}/replies \
+gh api repos/seantokuzo/u-suck-at-money/pulls/{number}/comments/{id}/replies \
   -f body="Not applicable — {specific reason}."
 
 # Deferred
-gh api repos/{{OWNER}}/{{REPO}}/pulls/{number}/comments/{id}/replies \
+gh api repos/seantokuzo/u-suck-at-money/pulls/{number}/comments/{id}/replies \
   -f body="Valid point. Tracked as Issue #XX for future work."
 ```
 

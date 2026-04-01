@@ -1,4 +1,4 @@
-# Copilot Instructions for {{PROJECT_NAME}}
+# Copilot Instructions for U Suck At Money
 
 ## Communication Style
 
@@ -32,7 +32,7 @@ Good: _just implements it_ "Done. Want me to add tests too?"
 
 ## Technical Context
 
-**{{PROJECT_NAME}}** — {{PROJECT_DESCRIPTION}}
+**U Suck At Money** — Personal finance command center — budget, spend analysis, 401k/HSA, investments, goals, and wishlist in one place
 
 See CLAUDE.md for full tech stack and conventions.
 See docs/PLANNING.md for architecture and roadmap.

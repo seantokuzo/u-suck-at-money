@@ -1,4 +1,4 @@
-# {{PROJECT_NAME}} — Project Instructions
+# U Suck At Money — Project Instructions
 
 > Extends global `~/.claude/CLAUDE.md`. Project-specific rules live here.
 
@@ -6,7 +6,7 @@
 
 ## Project Overview
 
-{{PROJECT_DESCRIPTION}}
+Personal finance command center — budget, spend analysis, 401k/HSA, investments, goals, and wishlist in one place
 
 See [docs/PLANNING.md](docs/PLANNING.md) for architecture, specs, and roadmap.
 
@@ -26,33 +26,33 @@ See [docs/PLANNING.md](docs/PLANNING.md) for architecture, specs, and roadmap.
 
 <!-- CUSTOMIZE: Replace with your project's tech stack -->
 
-### Frontend (`{{FRONTEND_DIR}}/`)
+### Frontend (`src/`)
 
 | Concern | Convention |
 |---------|-----------|
-| Framework | {{FRONTEND_FRAMEWORK}} |
-| Language | {{FRONTEND_LANGUAGE}} |
-| State mgmt | {{STATE_MANAGEMENT}} |
-| Styling | {{STYLING}} |
-| Testing | {{FRONTEND_TESTING}} |
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript |
+| State mgmt | Zustand 5 (client) + TanStack React Query 5 (server) |
+| Styling | Tailwind CSS 4 |
+| Testing | Vitest + Playwright |
 
-### Backend (`{{BACKEND_DIR}}/`)
+### Backend (`src/`)
 
 | Concern | Convention |
 |---------|-----------|
-| Runtime | {{BACKEND_RUNTIME}} |
-| Language | {{BACKEND_LANGUAGE}} |
-| Framework | {{BACKEND_FRAMEWORK}} |
-| Database | {{DATABASE}} |
-| Testing | {{BACKEND_TESTING}} |
+| Runtime | Node.js 22 |
+| Language | TypeScript |
+| Framework | Next.js 16 API Routes + Server Actions |
+| Database | Neon Postgres (Drizzle ORM) |
+| Testing | Vitest |
 
 ### Cross-Cutting
 
 | Concern | Convention |
 |---------|-----------|
-| Package manager | {{PACKAGE_MANAGER}} |
-| Monorepo tool | {{MONOREPO_TOOL}} (if applicable) |
-| API style | {{API_STYLE}} (REST / GraphQL / tRPC / WebSocket) |
+| Package manager | pnpm |
+| Monorepo tool | none (if applicable) |
+| API style | REST + Server Actions (REST / GraphQL / tRPC / WebSocket) |
 | IDs | UUID v4 |
 | Dates | ISO 8601 strings in protocol, native types internally |
 
@@ -63,7 +63,7 @@ See [docs/PLANNING.md](docs/PLANNING.md) for architecture, specs, and roadmap.
 - **Atomic commits** — one logical change per commit
 - **Commit format** — `type(scope): description`
 - **Types** — `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
-- **Scopes** — {{SCOPES}} (e.g., `frontend`, `backend`, `api`, `docs`)
+- **Scopes** — app, db, ui, api, auth, import, docs (e.g., `frontend`, `backend`, `api`, `docs`)
 - **Branch naming** — `phase-N/feature-name` for phase work, `fix/description` for bugs
 
 ---
