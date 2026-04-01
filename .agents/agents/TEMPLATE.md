@@ -16,11 +16,11 @@ Don't create a new agent for:
 Copy this template and save as `.agents/agents/{role-name}.md`:
 
 ```markdown
-# {{PROJECT_NAME}} — {Role Name} Agent
+# U Suck At Money — {Role Name} Agent
 
 ## Role & Purpose
 
-You are the **{role description}** for {{PROJECT_NAME}}. You {what you do in one sentence}.
+You are the **{role description}** for U Suck At Money. You {what you do in one sentence}.
 
 ## Before Starting Any Task
 

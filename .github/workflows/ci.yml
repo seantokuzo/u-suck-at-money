@@ -24,7 +24,7 @@ jobs:
   #   runs-on: ubuntu-latest
   #   defaults:
   #     run:
-  #       working-directory: {{FRONTEND_DIR}}
+  #       working-directory: src
   #   steps:
   #     - uses: actions/checkout@v4
   #
@@ -33,7 +33,7 @@ jobs:
   #       with:
   #         node-version: 22
   #         cache: "npm"
-  #         cache-dependency-path: {{FRONTEND_DIR}}/package-lock.json
+  #         cache-dependency-path: src/package-lock.json
   #
   #     - name: Install dependencies
   #       run: npm ci
@@ -46,7 +46,7 @@ jobs:
   #   runs-on: ubuntu-latest
   #   defaults:
   #     run:
-  #       working-directory: {{FRONTEND_DIR}}
+  #       working-directory: src
   #   steps:
   #     - uses: actions/checkout@v4
   #
@@ -55,7 +55,7 @@ jobs:
   #       with:
   #         node-version: 22
   #         cache: "npm"
-  #         cache-dependency-path: {{FRONTEND_DIR}}/package-lock.json
+  #         cache-dependency-path: src/package-lock.json
   #
   #     - name: Install dependencies
   #       run: npm ci
@@ -69,7 +69,7 @@ jobs:
   #   needs: [lint-frontend, typecheck-frontend]
   #   defaults:
   #     run:
-  #       working-directory: {{FRONTEND_DIR}}
+  #       working-directory: src
   #   steps:
   #     - uses: actions/checkout@v4
   #
@@ -78,7 +78,7 @@ jobs:
   #       with:
   #         node-version: 22
   #         cache: "npm"
-  #         cache-dependency-path: {{FRONTEND_DIR}}/package-lock.json
+  #         cache-dependency-path: src/package-lock.json
   #
   #     - name: Install dependencies
   #       run: npm ci
@@ -95,7 +95,7 @@ jobs:
   #   runs-on: ubuntu-latest
   #   defaults:
   #     run:
-  #       working-directory: {{BACKEND_DIR}}
+  #       working-directory: src
   #   steps:
   #     - uses: actions/checkout@v4
   #
@@ -104,7 +104,7 @@ jobs:
   #       with:
   #         node-version: 22
   #         cache: "npm"
-  #         cache-dependency-path: {{BACKEND_DIR}}/package-lock.json
+  #         cache-dependency-path: src/package-lock.json
   #
   #     - name: Install dependencies
   #       run: npm ci
@@ -117,7 +117,7 @@ jobs:
   #   runs-on: ubuntu-latest
   #   defaults:
   #     run:
-  #       working-directory: {{BACKEND_DIR}}
+  #       working-directory: src
   #   steps:
   #     - uses: actions/checkout@v4
   #
@@ -126,7 +126,7 @@ jobs:
   #       with:
   #         node-version: 22
   #         cache: "npm"
-  #         cache-dependency-path: {{BACKEND_DIR}}/package-lock.json
+  #         cache-dependency-path: src/package-lock.json
   #
   #     - name: Install dependencies
   #       run: npm ci
@@ -140,7 +140,7 @@ jobs:
   #   needs: [lint-backend, typecheck-backend]
   #   defaults:
   #     run:
-  #       working-directory: {{BACKEND_DIR}}
+  #       working-directory: src
   #   steps:
   #     - uses: actions/checkout@v4
   #
@@ -149,7 +149,7 @@ jobs:
   #       with:
   #         node-version: 22
   #         cache: "npm"
-  #         cache-dependency-path: {{BACKEND_DIR}}/package-lock.json
+  #         cache-dependency-path: src/package-lock.json
   #
   #     - name: Install dependencies
   #       run: npm ci
@@ -165,7 +165,7 @@ jobs:
   #   needs: [lint-backend, typecheck-backend]
   #   defaults:
   #     run:
-  #       working-directory: {{BACKEND_DIR}}
+  #       working-directory: src
   #   steps:
   #     - uses: actions/checkout@v4
   #
@@ -174,7 +174,7 @@ jobs:
   #       with:
   #         node-version: 22
   #         cache: "npm"
-  #         cache-dependency-path: {{BACKEND_DIR}}/package-lock.json
+  #         cache-dependency-path: src/package-lock.json
   #
   #     - name: Install dependencies
   #       run: npm ci

@@ -12,16 +12,16 @@ The CI pipeline mirrors `.github/workflows/ci.yml`. Customize these commands for
 
 <!-- CUSTOMIZE: Replace with your actual build/test commands -->
 
-### Frontend (`{{FRONTEND_DIR}}/`)
+### Frontend (`src/`)
 
 ```bash
-cd {{FRONTEND_DIR}} && npm run lint && npm run typecheck && npm run build
+cd src && npm run lint && npm run typecheck && npm run build
 ```
 
-### Backend (`{{BACKEND_DIR}}/`)
+### Backend (`src/`)
 
 ```bash
-cd {{BACKEND_DIR}} && npm run lint && npm run typecheck && npm test && npm run build
+cd src && npm run lint && npm run typecheck && npm test && npm run build
 ```
 
 ## Rules

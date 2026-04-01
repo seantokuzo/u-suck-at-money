@@ -49,4 +49,20 @@ logs/
 # Package locks (uncomment the ones you DON'T use)
 # package-lock.json
 # yarn.lock
-# pnpm-lock.yaml
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# PnP
+/.pnp
+.pnp.*
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*

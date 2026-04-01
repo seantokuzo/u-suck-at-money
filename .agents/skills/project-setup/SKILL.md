@@ -27,11 +27,11 @@ Ask the user for these values (all required):
 
 | Placeholder | Question | Example |
 |-------------|----------|---------|
-| `{{PROJECT_NAME}}` | "What's your project called?" | `Pulse` |
-| `{{PROJECT_DESCRIPTION}}` | "One-liner — what does it do?" | `Real-time analytics dashboard for SaaS metrics` |
-| `{{OWNER}}` | "GitHub username or org?" | `seantokuzo` |
-| `{{REPO}}` | "GitHub repo name?" | `pulse` |
-| `{{GIT_USERNAME}}` | "Your git username (for PR assignment)?" | `seantokuzo` |
+| `U Suck At Money` | "What's your project called?" | `Pulse` |
+| `Personal finance command center — budget, spend analysis, 401k/HSA, investments, goals, and wishlist in one place` | "One-liner — what does it do?" | `Real-time analytics dashboard for SaaS metrics` |
+| `seantokuzo` | "GitHub username or org?" | `seantokuzo` |
+| `u-suck-at-money` | "GitHub repo name?" | `pulse` |
+| `seantokuzo` | "Your git username (for PR assignment)?" | `seantokuzo` |
 
 ### Step 2: Gather Tech Stack (Optional)
 
@@ -39,22 +39,22 @@ These can be filled in now or left as placeholders for later:
 
 | Placeholder | Question |
 |-------------|----------|
-| `{{FRONTEND_DIR}}` | Frontend directory name (e.g., `web`, `client`, `frontend`) |
-| `{{FRONTEND_FRAMEWORK}}` | Framework (e.g., `React 19`, `Svelte 5`, `Vue 3`, `Next.js 15`) |
-| `{{FRONTEND_LANGUAGE}}` | Language (e.g., `TypeScript`, `JavaScript`) |
-| `{{STATE_MANAGEMENT}}` | State approach (e.g., `Zustand`, `Svelte stores`, `Pinia`) |
-| `{{STYLING}}` | Styling (e.g., `Tailwind CSS`, `CSS Modules`, `styled-components`) |
-| `{{FRONTEND_TESTING}}` | Test framework (e.g., `Vitest`, `Jest`, `Playwright`) |
-| `{{BACKEND_DIR}}` | Backend directory name (e.g., `server`, `api`, `backend`) |
-| `{{BACKEND_RUNTIME}}` | Runtime (e.g., `Node.js 22`, `Python 3.12`, `Go 1.22`) |
-| `{{BACKEND_LANGUAGE}}` | Language (e.g., `TypeScript`, `Python`, `Go`) |
-| `{{BACKEND_FRAMEWORK}}` | Framework (e.g., `Fastify`, `Express`, `FastAPI`, `Gin`) |
-| `{{DATABASE}}` | Database (e.g., `PostgreSQL`, `SQLite`, `MongoDB`, `None yet`) |
-| `{{BACKEND_TESTING}}` | Test framework (e.g., `Vitest`, `pytest`, `go test`) |
-| `{{PACKAGE_MANAGER}}` | Package manager (e.g., `npm`, `pnpm`, `yarn`, `pip`) |
-| `{{MONOREPO_TOOL}}` | Monorepo tool (e.g., `turborepo`, `nx`, `none`) |
-| `{{API_STYLE}}` | API style (e.g., `REST`, `GraphQL`, `tRPC`, `WebSocket`) |
-| `{{SCOPES}}` | Git commit scopes (e.g., `frontend, backend, api, docs`) |
+| `src` | Frontend directory name (e.g., `web`, `client`, `frontend`) |
+| `Next.js 16 (App Router)` | Framework (e.g., `React 19`, `Svelte 5`, `Vue 3`, `Next.js 15`) |
+| `TypeScript` | Language (e.g., `TypeScript`, `JavaScript`) |
+| `Zustand 5 (client) + TanStack React Query 5 (server)` | State approach (e.g., `Zustand`, `Svelte stores`, `Pinia`) |
+| `Tailwind CSS 4` | Styling (e.g., `Tailwind CSS`, `CSS Modules`, `styled-components`) |
+| `Vitest + Playwright` | Test framework (e.g., `Vitest`, `Jest`, `Playwright`) |
+| `src` | Backend directory name (e.g., `server`, `api`, `backend`) |
+| `Node.js 22` | Runtime (e.g., `Node.js 22`, `Python 3.12`, `Go 1.22`) |
+| `TypeScript` | Language (e.g., `TypeScript`, `Python`, `Go`) |
+| `Next.js 16 API Routes + Server Actions` | Framework (e.g., `Fastify`, `Express`, `FastAPI`, `Gin`) |
+| `Neon Postgres (Drizzle ORM)` | Database (e.g., `PostgreSQL`, `SQLite`, `MongoDB`, `None yet`) |
+| `Vitest` | Test framework (e.g., `Vitest`, `pytest`, `go test`) |
+| `pnpm` | Package manager (e.g., `npm`, `pnpm`, `yarn`, `pip`) |
+| `none` | Monorepo tool (e.g., `turborepo`, `nx`, `none`) |
+| `REST + Server Actions` | API style (e.g., `REST`, `GraphQL`, `tRPC`, `WebSocket`) |
+| `app, db, ui, api, auth, import, docs` | Git commit scopes (e.g., `frontend, backend, api, docs`) |
 
 **If they don't know yet:** Leave as `{{PLACEHOLDER}}` — they can fill in during Phase 1 planning.
 
@@ -64,7 +64,7 @@ Run replacements across all files. Required placeholders first:
 
 ```bash
 # Find all files with placeholders
-grep -r "{{PROJECT_NAME}}\|{{OWNER}}\|{{REPO}}\|{{GIT_USERNAME}}" --include="*.md" --include="*.yml" --include="*.json" --include="*.sh" -l .
+grep -r "U Suck At Money\|seantokuzo\|u-suck-at-money\|seantokuzo" --include="*.md" --include="*.yml" --include="*.json" --include="*.sh" -l .
 ```
 
 Replace using the Edit tool for each file, or for bulk replacement:
@@ -73,7 +73,7 @@ Replace using the Edit tool for each file, or for bulk replacement:
 # Core replacements (always do these)
 find . -type f \( -name "*.md" -o -name "*.yml" -o -name "*.json" -o -name "*.sh" \) \
   -not -path "./.git/*" \
-  -exec sed -i '' "s/{{PROJECT_NAME}}/ActualName/g" {} +
+  -exec sed -i '' "s/U Suck At Money/ActualName/g" {} +
 ```
 
 ### Step 4: Agent Role Selection
@@ -117,7 +117,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 If they want to create the repo now:
 
 ```bash
-gh repo create {{OWNER}}/{{REPO}} --private --source=. --remote=origin --push
+gh repo create seantokuzo/u-suck-at-money --private --source=. --remote=origin --push
 ```
 
 ## Post-Setup

@@ -58,8 +58,8 @@ All three reviewers need time to analyze the PR.
 ```bash
 # Poll every 30s for up to 5 minutes (three reviewers need time)
 for i in {1..10}; do
-  COMMENTS=$(gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/comments --jq 'length')
-  REVIEWS=$(gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/reviews --jq 'length')
+  COMMENTS=$(gh api repos/seantokuzo/u-suck-at-money/pulls/{PR_NUMBER}/comments --jq 'length')
+  REVIEWS=$(gh api repos/seantokuzo/u-suck-at-money/pulls/{PR_NUMBER}/reviews --jq 'length')
   if [ "$COMMENTS" -gt 0 ] || [ "$REVIEWS" -gt 0 ]; then
     echo "Found $COMMENTS inline comments and $REVIEWS reviews"
     break
@@ -73,7 +73,7 @@ done
 
 ```bash
 # Get all review comments (inline on diff)
-gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/comments \
+gh api repos/seantokuzo/u-suck-at-money/pulls/{PR_NUMBER}/comments \
   --jq '.[] | select(.in_reply_to_id == null) | {id, user: .user.login, path, line: (.line // .original_line), body: (.body | split("\n")[0])}'
 ```
 
@@ -151,15 +151,15 @@ Reply to EACH comment in its own thread (never as unlinked PR comments):
 
 ```bash
 # Fixed
-gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies \
+gh api repos/seantokuzo/u-suck-at-money/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies \
   -f body="Fixed — {brief description of what was done}"
 
 # Not applicable
-gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies \
+gh api repos/seantokuzo/u-suck-at-money/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies \
   -f body="Not applicable — {specific reason why this doesn't apply}"
 
 # Deferred
-gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies \
+gh api repos/seantokuzo/u-suck-at-money/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies \
   -f body="Deferred — tracked as GitHub Issue for future work"
 ```
 
@@ -239,13 +239,13 @@ When replying to comments, be specific:
 
 ```bash
 # List PR inline comments (review comments on diff)
-gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR}/comments
+gh api repos/seantokuzo/u-suck-at-money/pulls/{PR}/comments
 
 # Reply to a specific comment (in its thread)
-gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR}/comments/{ID}/replies -f body="..."
+gh api repos/seantokuzo/u-suck-at-money/pulls/{PR}/comments/{ID}/replies -f body="..."
 
 # List PR reviews (approve/request changes)
-gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR}/reviews
+gh api repos/seantokuzo/u-suck-at-money/pulls/{PR}/reviews
 
 # Check PR status
 gh pr view {PR} --json mergeable,mergeStateStatus,statusCheckRollup

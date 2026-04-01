@@ -1,4 +1,4 @@
-# {{PROJECT_NAME}} — Project State
+# U Suck At Money — Project State
 
 > Reference this file at the start of each session for context.
 > Update after each phase milestone.
@@ -7,7 +7,7 @@
 
 ## Current Phase
 
-**Phase 1: "{{PHASE_1_THEME}}"** — Not started
+**Phase 1: "Foundation"** — Not started
 
 ## Strategy
 
@@ -17,7 +17,7 @@
 
 ## Phase Progress
 
-### Phase 1: "{{PHASE_1_THEME}}"
+### Phase 1: "Foundation"
 
 - [ ] Wave 1 tasks
 - [ ] Wave 2 tasks

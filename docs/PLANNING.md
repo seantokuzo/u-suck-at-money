@@ -1,4 +1,4 @@
-# {{PROJECT_NAME}} — Planning Document
+# U Suck At Money — Planning Document
 
 > Source of truth for architecture, design decisions, and roadmap.
 > Update this document as the project evolves. It's a living spec, not a snapshot.
@@ -22,7 +22,7 @@
 
 ### What
 
-{{PROJECT_DESCRIPTION}}
+Personal finance command center — budget, spend analysis, 401k/HSA, investments, goals, and wishlist in one place
 
 ### Why
 
@@ -56,9 +56,9 @@
 
 | Layer | Technology | Why |
 |-------|-----------|-----|
-| Frontend | {{FRONTEND_FRAMEWORK}} | <!-- Reason --> |
-| Backend | {{BACKEND_FRAMEWORK}} | <!-- Reason --> |
-| Database | {{DATABASE}} | <!-- Reason --> |
+| Frontend | Next.js 16 (App Router) | <!-- Reason --> |
+| Backend | Next.js 16 API Routes + Server Actions | <!-- Reason --> |
+| Database | Neon Postgres (Drizzle ORM) | <!-- Reason --> |
 | Hosting | <!-- TBD --> | <!-- Reason --> |
 
 ### Key Design Decisions
@@ -74,7 +74,7 @@
 
 ## Components
 
-### Frontend (`{{FRONTEND_DIR}}/`)
+### Frontend (`src/`)
 
 <!-- Describe the frontend architecture -->
 
@@ -83,7 +83,7 @@
 
 **Key directories:**
 ```
-{{FRONTEND_DIR}}/
+src/
 ├── src/
 │   ├── components/
 │   ├── features/
@@ -91,7 +91,7 @@
 │   └── utils/
 ```
 
-### Backend (`{{BACKEND_DIR}}/`)
+### Backend (`src/`)
 
 <!-- Describe the backend architecture -->
 
@@ -100,7 +100,7 @@
 
 **Key directories:**
 ```
-{{BACKEND_DIR}}/
+src/
 ├── src/
 │   ├── routes/
 │   ├── services/
@@ -183,7 +183,7 @@ Resource
 
 ## Roadmap
 
-### Phase 1: "{{PHASE_1_THEME}}"
+### Phase 1: "Foundation"
 
 **Goal:** <!-- What can the user do after this phase? -->
 
@@ -192,13 +192,13 @@ Resource
 - [ ] Criterion 2
 
 **Wave 1 (Independent):**
-- [ ] Task A ({{COMPONENT}}) — Description
-- [ ] Task B ({{COMPONENT}}) — Description
+- [ ] Task A (app) — Description
+- [ ] Task B (app) — Description
 
 **Wave 2 (Depends on Wave 1):**
-- [ ] Task C ({{COMPONENT}}) — Description
+- [ ] Task C (app) — Description
 
-### Phase 2: "{{PHASE_2_THEME}}"
+### Phase 2: "Import Engine"
 
 **Goal:** <!-- What's next? -->
 

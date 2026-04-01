@@ -8,12 +8,12 @@ applyTo: "**/*"
 
 | Property | Value |
 |----------|-------|
-| **Owner** | `{{OWNER}}` |
-| **Repo** | `{{REPO}}` |
-| **URL** | https://github.com/{{OWNER}}/{{REPO}} |
-| **PRs** | https://github.com/{{OWNER}}/{{REPO}}/pulls |
+| **Owner** | `seantokuzo` |
+| **Repo** | `u-suck-at-money` |
+| **URL** | https://github.com/seantokuzo/u-suck-at-money |
+| **PRs** | https://github.com/seantokuzo/u-suck-at-money/pulls |
 | **Default Branch** | `main` |
-| **Username** | `{{GIT_USERNAME}}` |
+| **Username** | `seantokuzo` |
 
 ## Branch Strategy
 
@@ -30,7 +30,7 @@ type(scope): description
 ```
 
 **Types**: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
-**Scopes**: {{SCOPES}}
+**Scopes**: app, db, ui, api, auth, import, docs
 
 Examples:
 
@@ -57,7 +57,7 @@ fix: description of the fix
 When creating a PR:
 
 1. **Create PR** (not draft)
-2. **Assign `@{{GIT_USERNAME}}`**
+2. **Assign `@seantokuzo`**
 3. **Apply labels**: component + type + `Needs Review`
 4. **Copilot auto-reviews + trigger @claude and @codex reviews via PR comments**
 5. **Run PR review pipeline** (`.agents/skills/pr-review-pipeline/SKILL.md`)
@@ -68,8 +68,8 @@ When creating a PR:
 
 | Label | When to Apply |
 |-------|-------------|
-| **Frontend** | Changes to `{{FRONTEND_DIR}}/` |
-| **Backend** | Changes to `{{BACKEND_DIR}}/` |
+| **Frontend** | Changes to `src/` |
+| **Backend** | Changes to `src/` |
 | **Docs** | Documentation changes |
 
 ### Type Labels
@@ -106,8 +106,8 @@ When creating a PR:
 
 ```
 mcp__github__create_pull_request
-- owner: "{{OWNER}}"
-- repo: "{{REPO}}"
+- owner: "seantokuzo"
+- repo: "u-suck-at-money"
 - title: "Phase 1: Feature description"
 - body: "## Summary\n..."
 - head: "phase-1/feature-name"
@@ -118,9 +118,9 @@ mcp__github__create_pull_request
 
 ```bash
 # Get all review comments
-gh api repos/{{OWNER}}/{{REPO}}/pulls/{number}/comments
+gh api repos/seantokuzo/u-suck-at-money/pulls/{number}/comments
 
 # Reply to a specific comment
-gh api repos/{{OWNER}}/{{REPO}}/pulls/{number}/comments/{comment_id}/replies \
+gh api repos/seantokuzo/u-suck-at-money/pulls/{number}/comments/{comment_id}/replies \
   -f body="Fixed in abc123"
 ```

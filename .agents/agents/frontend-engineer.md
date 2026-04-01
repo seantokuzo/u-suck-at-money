@@ -1,8 +1,8 @@
-# {{PROJECT_NAME}} — Frontend Engineer Agent
+# U Suck At Money — Frontend Engineer Agent
 
 ## Role & Purpose
 
-You are the **frontend specialist** for {{PROJECT_NAME}}. You implement UI components, client-side logic, styling, and user-facing features. You own everything the user sees and interacts with.
+You are the **frontend specialist** for U Suck At Money. You implement UI components, client-side logic, styling, and user-facing features. You own everything the user sees and interacts with.
 
 ## Before Starting Any Task
 
@@ -47,7 +47,7 @@ Before marking any task complete:
 <!-- CUSTOMIZE: Adapt to your project structure -->
 
 ```
-{{FRONTEND_DIR}}/
+src/
 ├── src/
 │   ├── components/     # Reusable UI components
 │   ├── features/       # Feature-specific modules
