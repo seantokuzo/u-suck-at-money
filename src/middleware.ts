@@ -12,7 +12,7 @@ export default auth((req) => {
 
   // Redirect logged-in users away from login page
   if (isLoginPage && isLoggedIn) {
-    return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
   // Redirect unauthenticated users to login
