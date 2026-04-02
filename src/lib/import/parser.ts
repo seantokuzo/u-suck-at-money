@@ -6,20 +6,20 @@ import type { ParsedFile } from "./types";
 export async function parseFile(file: File): Promise<ParsedFile> {
   const ext = file.name.split(".").pop()?.toLowerCase();
 
-  if (ext === "csv" || ext === "tsv") {
+  if (ext === "csv") {
     return parseCsv(file);
   }
 
-  if (ext === "xlsx" || ext === "xls") {
+  if (ext === "xlsx") {
     return parseXlsx(file);
   }
 
   throw new Error(
-    `Unsupported file type: .${ext ?? "unknown"}. Use .csv, .tsv, .xlsx, or .xls`,
+    `Unsupported file type: .${ext ?? "unknown"}. Use .csv or .xlsx`,
   );
 }
 
-/** Parse CSV/TSV via PapaParse */
+/** Parse CSV via PapaParse */
 function parseCsv(file: File): Promise<ParsedFile> {
   return new Promise((resolve, reject) => {
     Papa.parse<string[]>(file, {
@@ -43,7 +43,7 @@ function parseCsv(file: File): Promise<ParsedFile> {
   });
 }
 
-/** Parse XLSX/XLS via SheetJS */
+/** Parse XLSX via SheetJS */
 async function parseXlsx(file: File): Promise<ParsedFile> {
   const buffer = await file.arrayBuffer();
   const workbook = read(buffer, { type: "array" });

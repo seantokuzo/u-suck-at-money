@@ -59,28 +59,38 @@ interface DuplicateCandidate {
 /**
  * Given candidate transactions, return which ones already exist in the DB.
  * Uses the (date, amountCents, description) dedup index for efficient matching.
+ * Chunks candidates into batches to avoid oversized SQL queries.
  * Returns matching tuples so the caller can filter them out.
  */
 export async function findDuplicates(candidates: DuplicateCandidate[]) {
   if (candidates.length === 0) return [];
 
-  // Build OR conditions for each candidate tuple
-  const conditions = candidates.map((c) =>
-    and(
-      eq(transactions.date, c.date),
-      eq(transactions.amountCents, c.amountCents),
-      eq(transactions.description, c.description),
-    ),
-  );
+  const CHUNK_SIZE = 500;
+  const results: { date: string; amountCents: number; description: string }[] =
+    [];
 
-  const existing = await db
-    .select({
-      date: transactions.date,
-      amountCents: transactions.amountCents,
-      description: transactions.description,
-    })
-    .from(transactions)
-    .where(conditions.length === 1 ? conditions[0] : or(...conditions));
+  for (let i = 0; i < candidates.length; i += CHUNK_SIZE) {
+    const chunk = candidates.slice(i, i + CHUNK_SIZE);
 
-  return existing;
+    const conditions = chunk.map((c) =>
+      and(
+        eq(transactions.date, c.date),
+        eq(transactions.amountCents, c.amountCents),
+        eq(transactions.description, c.description),
+      ),
+    );
+
+    const existing = await db
+      .select({
+        date: transactions.date,
+        amountCents: transactions.amountCents,
+        description: transactions.description,
+      })
+      .from(transactions)
+      .where(conditions.length === 1 ? conditions[0] : or(...conditions));
+
+    results.push(...existing);
+  }
+
+  return results;
 }

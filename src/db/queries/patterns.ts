@@ -26,7 +26,7 @@ export async function getPatternsByCategoryId(categoryId: string) {
 
 /**
  * Given a transaction description, find the first matching pattern.
- * Uses case-insensitive ILIKE to match the pattern field against the description.
+ * Fetches all patterns and matches in JS with case-insensitive includes.
  * Returns the pattern row with category info, or null.
  */
 export async function matchPattern(description: string) {

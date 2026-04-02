@@ -105,6 +105,7 @@ export async function importTransactions(data: ImportData) {
 
     // 6. Revalidate paths
     revalidatePath("/import");
+    revalidatePath("/import/history");
     revalidatePath("/transactions");
     revalidatePath("/dashboard");
 
@@ -142,6 +143,7 @@ export async function deleteImport(importId: string) {
 
     // 3. Revalidate paths
     revalidatePath("/import");
+    revalidatePath("/import/history");
     revalidatePath("/transactions");
     revalidatePath("/dashboard");
 
@@ -174,6 +176,7 @@ export async function createImportPattern(
       .returning();
 
     revalidatePath("/import");
+    revalidatePath("/import/history");
     return { success: true, pattern: result };
   } catch {
     return { error: "Failed to create import pattern" };
@@ -187,6 +190,7 @@ export async function deleteImportPattern(id: string) {
     await db.delete(importPatterns).where(eq(importPatterns.id, id));
 
     revalidatePath("/import");
+    revalidatePath("/import/history");
     return { success: true };
   } catch {
     return { error: "Failed to delete import pattern" };

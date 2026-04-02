@@ -65,7 +65,16 @@ export const useImportStore = create<ImportState>()((set) => ({
   ...initialState,
 
   setFile: (file, parsed, hash) =>
-    set({ file, parsedFile: parsed, fileName: file.name, fileHash: hash }),
+    set({
+      file,
+      parsedFile: parsed,
+      fileName: file.name,
+      fileHash: hash,
+      previewTransactions: [],
+      excludedRows: new Set<number>(),
+      importedCount: 0,
+      duplicateCount: 0,
+    }),
 
   setAccountId: (id) => set({ accountId: id }),
 
