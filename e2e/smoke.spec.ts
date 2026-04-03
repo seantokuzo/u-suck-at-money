@@ -21,8 +21,7 @@ test.describe("Smoke Tests", () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test("navigation links exist on login redirect", async ({ page }) => {
-    // Going to any protected route should redirect to login
+  test("protected routes redirect unauthenticated users to /login", async ({ page }) => {
     await page.goto("/accounts");
     await page.waitForURL("**/login");
     await expect(page).toHaveURL(/\/login/);

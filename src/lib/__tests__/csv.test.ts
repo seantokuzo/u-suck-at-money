@@ -59,6 +59,29 @@ describe("toCsv", () => {
     expect(lines[1]).toBe("42,true,hello");
   });
 
+  it("sanitizes formula injection prefixes (=, +, -, @)", () => {
+    const rows = [
+      { desc: "=SUM(A1:A10)" },
+      { desc: "+cmd|'/C calc'" },
+      { desc: "-1+1" },
+      { desc: "@SUM(A1)" },
+    ];
+    const csv = toCsv(rows);
+    const lines = csv.split("\n");
+    expect(lines[1]).toBe("'=SUM(A1:A10)");
+    expect(lines[2]).toBe("'+cmd|'/C calc'");
+    expect(lines[3]).toBe("'-1+1");
+    expect(lines[4]).toBe("'@SUM(A1)");
+  });
+
+  it("does not sanitize normal values", () => {
+    const rows = [{ desc: "normal text" }, { desc: "123" }];
+    const csv = toCsv(rows);
+    const lines = csv.split("\n");
+    expect(lines[1]).toBe("normal text");
+    expect(lines[2]).toBe("123");
+  });
+
   it("handles multiple rows with all edge cases", () => {
     const rows = [
       { id: 1, name: "Normal", notes: "" },
