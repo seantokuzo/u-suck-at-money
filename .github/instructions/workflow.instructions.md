@@ -63,12 +63,12 @@ Before ANY push:
 3. Fix issues, commit fixes
 4. Run CI locally
 
-### 5. PR + Triple Review
+### 5. PR + Copilot Review
 
 1. Push branch
 2. Create PR (not draft) with template
 3. Apply labels, assign reviewer
-4. Copilot auto-reviews + trigger @claude and @codex reviews
+4. Copilot auto-reviews (ensure auto-review is enabled in repo settings)
 5. Run the PR review pipeline (`.agents/skills/pr-review-pipeline/SKILL.md`)
 
 ### 6. Address Comments
