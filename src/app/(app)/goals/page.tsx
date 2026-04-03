@@ -1,10 +1,26 @@
+import { getGoals, getGoalsSummary } from "@/db/queries/goals";
+import { getAccounts } from "@/db/queries/accounts";
+import { GoalsClient } from "./goals-client";
+
 export const metadata = { title: "Goals" };
 
-export default function GoalsPage() {
+export default async function GoalsPage() {
+  const [goals, summary, accounts] = await Promise.all([
+    getGoals(),
+    getGoalsSummary(),
+    getAccounts(),
+  ]);
+
+  const accountOptions = accounts.map((a) => ({
+    label: a.name,
+    value: a.id,
+  }));
+
   return (
-    <div className="mx-auto max-w-7xl">
-      <h1 className="text-2xl font-bold">Goals</h1>
-      <p className="mt-2 text-zinc-400">Coming soon.</p>
-    </div>
+    <GoalsClient
+      initialGoals={goals}
+      initialSummary={summary}
+      accountOptions={accountOptions}
+    />
   );
 }

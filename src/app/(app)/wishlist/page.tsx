@@ -1,10 +1,23 @@
+import { getWishlistItems, getWishlistSummary } from "@/db/queries/wishlist";
+import { getCategories } from "@/db/queries/categories";
+import { WishlistClient } from "./wishlist-client";
+
 export const metadata = { title: "Wishlist" };
 
-export default function WishlistPage() {
+export default async function WishlistPage() {
+  const [items, summary, categories] = await Promise.all([
+    getWishlistItems(),
+    getWishlistSummary(),
+    getCategories(),
+  ]);
+
   return (
-    <div className="mx-auto max-w-7xl">
-      <h1 className="text-2xl font-bold">Wishlist</h1>
-      <p className="mt-2 text-zinc-400">Coming soon.</p>
-    </div>
+    <WishlistClient
+      initialData={{
+        items,
+        summary,
+        categories,
+      }}
+    />
   );
 }

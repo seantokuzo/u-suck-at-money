@@ -1,10 +1,23 @@
-export const metadata = { title: "Events" };
+import { getEvents, getEventsSummary } from "@/db/queries/events";
+import { getCategories } from "@/db/queries/categories";
+import { EventsClient } from "./events-client";
 
-export default function EventsPage() {
+export const metadata = { title: "Life Events" };
+
+export default async function EventsPage() {
+  const [events, summary, categories] = await Promise.all([
+    getEvents(),
+    getEventsSummary(),
+    getCategories(),
+  ]);
+
   return (
-    <div className="mx-auto max-w-7xl">
-      <h1 className="text-2xl font-bold">Events</h1>
-      <p className="mt-2 text-zinc-400">Coming soon.</p>
-    </div>
+    <EventsClient
+      initialData={{
+        events,
+        summary,
+        categories,
+      }}
+    />
   );
 }
