@@ -4,7 +4,10 @@ import {
   getMonthlySnapshot,
   getAccountSummary,
   getRecentTransactions,
+  getMonthlySnapshots,
+  getCategorySpend,
 } from "@/db/queries/dashboard";
+import { DashboardCharts } from "./dashboard-charts";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCents, formatDate, currentMonth, cn } from "@/lib/utils";
@@ -42,12 +45,15 @@ function KpiCard({
 
 // ─── Page ───────────────────────────────────────────────
 export default async function DashboardPage() {
-  const [netWorth, snapshot, accountGroups, recentTxns] = await Promise.all([
-    getNetWorth(),
-    getMonthlySnapshot(currentMonth()),
-    getAccountSummary(),
-    getRecentTransactions(5),
-  ]);
+  const [netWorth, snapshot, accountGroups, recentTxns, snapshots, categorySpend] =
+    await Promise.all([
+      getNetWorth(),
+      getMonthlySnapshot(currentMonth()),
+      getAccountSummary(),
+      getRecentTransactions(5),
+      getMonthlySnapshots(6),
+      getCategorySpend(currentMonth()),
+    ]);
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -198,23 +204,18 @@ export default async function DashboardPage() {
         )}
       </section>
 
-      {/* ── Chart Placeholders ────────────────────────── */}
+      {/* ── Charts ──────────────────────────────────── */}
       <section className="mt-10 mb-10">
         <h3 className="mb-4 text-lg font-semibold text-zinc-100">Charts</h3>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="flex h-48 items-center justify-center rounded-lg border-2 border-dashed border-zinc-700 bg-zinc-900/50">
-            <div className="text-center">
-              <p className="text-sm font-medium text-zinc-400">Cashflow Chart</p>
-              <p className="mt-1 text-xs text-zinc-600">Coming in Phase 3</p>
-            </div>
-          </div>
-          <div className="flex h-48 items-center justify-center rounded-lg border-2 border-dashed border-zinc-700 bg-zinc-900/50">
-            <div className="text-center">
-              <p className="text-sm font-medium text-zinc-400">Spending Breakdown</p>
-              <p className="mt-1 text-xs text-zinc-600">Coming in Phase 3</p>
-            </div>
-          </div>
-        </div>
+        <DashboardCharts
+          monthlySnapshots={snapshots.map((s) => ({
+            month: s.month,
+            totalIncomeCents: s.totalIncomeCents,
+            totalExpensesCents: s.totalExpensesCents,
+            netCashflowCents: s.netCashflowCents,
+          }))}
+          categorySpend={categorySpend}
+        />
       </section>
     </div>
   );

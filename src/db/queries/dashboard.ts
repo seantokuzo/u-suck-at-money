@@ -1,6 +1,11 @@
 import { db } from "@/db";
-import { accounts, transactions, categories, monthlySnapshots } from "@/db/schema";
-import { eq, desc, sql } from "drizzle-orm";
+import {
+  accounts,
+  transactions,
+  categories,
+  monthlySnapshots,
+} from "@/db/schema";
+import { eq, and, lt, gte, desc, sql, isNotNull } from "drizzle-orm";
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -81,7 +86,9 @@ export async function getAccountSummary(): Promise<AccountGroupSummary[]> {
 }
 
 /** Last N transactions with category name joined */
-export async function getRecentTransactions(limit: number): Promise<RecentTransaction[]> {
+export async function getRecentTransactions(
+  limit: number,
+): Promise<RecentTransaction[]> {
   const rows = await db
     .select({
       id: transactions.id,
@@ -96,4 +103,115 @@ export async function getRecentTransactions(limit: number): Promise<RecentTransa
     .limit(limit);
 
   return rows;
+}
+
+// ─── Snapshot & Analysis Queries ───────────────────────
+
+/** Get the last N monthly snapshots, ordered by month DESC (for trend charts) */
+export async function getMonthlySnapshots(months: number) {
+  return db
+    .select()
+    .from(monthlySnapshots)
+    .orderBy(desc(monthlySnapshots.month))
+    .limit(months);
+}
+
+export interface CategorySpend {
+  categoryId: string;
+  categoryName: string;
+  totalCents: number;
+  color: string | null;
+}
+
+/**
+ * Aggregate expense transactions for a given month, grouped by category.
+ * Only includes negative amounts (expenses) where excludeFromTotals=false.
+ */
+export async function getCategorySpend(
+  month: string,
+): Promise<CategorySpend[]> {
+  const firstDay = `${month}-01`;
+  const nextMonth = getNextMonthFirstDay(month);
+
+  const rows = await db
+    .select({
+      categoryId: transactions.categoryId,
+      categoryName: categories.name,
+      totalCents: sql<number>`coalesce(sum(${transactions.amountCents}), 0)`,
+      color: categories.color,
+    })
+    .from(transactions)
+    .innerJoin(categories, eq(transactions.categoryId, categories.id))
+    .where(
+      and(
+        gte(transactions.date, firstDay),
+        lt(transactions.date, nextMonth),
+        eq(transactions.excludeFromTotals, false),
+        lt(transactions.amountCents, 0),
+      ),
+    )
+    .groupBy(transactions.categoryId, categories.name, categories.color);
+
+  // Filter out any null categoryIds (shouldn't happen with innerJoin, but be safe)
+  return rows.filter(
+    (r): r is CategorySpend => r.categoryId !== null,
+  );
+}
+
+export interface CategoryBudgetVsActual {
+  categoryId: string;
+  categoryName: string;
+  budgetCents: number;
+  actualCents: number;
+  color: string | null;
+}
+
+/**
+ * Compare category budgets to actual spending for a month.
+ * Only includes categories that have a budget set.
+ * actualCents is the absolute value of expense totals for easier comparison.
+ */
+export async function getCategoryBudgetVsActual(
+  month: string,
+): Promise<CategoryBudgetVsActual[]> {
+  const firstDay = `${month}-01`;
+  const nextMonth = getNextMonthFirstDay(month);
+
+  const rows = await db
+    .select({
+      categoryId: categories.id,
+      categoryName: categories.name,
+      budgetCents: categories.budgetAmountCents,
+      actualCents:
+        sql<number>`coalesce(abs(sum(case when ${transactions.amountCents} < 0 and ${transactions.excludeFromTotals} = false and ${transactions.date} >= ${firstDay} and ${transactions.date} < ${nextMonth} then ${transactions.amountCents} else 0 end)), 0)`,
+      color: categories.color,
+    })
+    .from(categories)
+    .leftJoin(transactions, eq(transactions.categoryId, categories.id))
+    .where(isNotNull(categories.budgetAmountCents))
+    .groupBy(
+      categories.id,
+      categories.name,
+      categories.budgetAmountCents,
+      categories.color,
+    );
+
+  return rows.filter(
+    (r): r is CategoryBudgetVsActual => r.budgetCents !== null,
+  );
+}
+
+// ─── Helpers ───────────────────────────────────────────
+
+/** Given "YYYY-MM", return the first day of the next month as "YYYY-MM-01" */
+function getNextMonthFirstDay(month: string): string {
+  const [yearStr, monthStr] = month.split("-");
+  let year = parseInt(yearStr, 10);
+  let m = parseInt(monthStr, 10);
+  m += 1;
+  if (m > 12) {
+    m = 1;
+    year += 1;
+  }
+  return `${year}-${String(m).padStart(2, "0")}-01`;
 }
