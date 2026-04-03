@@ -1,10 +1,30 @@
+import {
+  getInvestmentAccounts,
+  getTotalInvestmentBalance,
+  getInvestmentAllocation,
+  getInvestmentBalanceHistoryByType,
+} from "@/db/queries/investments";
+import { InvestmentsClient } from "./investments-client";
+
 export const metadata = { title: "Investments" };
 
-export default function InvestmentsPage() {
+export default async function InvestmentsPage() {
+  const [investmentAccounts, totalBalanceCents, allocation, balanceHistory] =
+    await Promise.all([
+      getInvestmentAccounts(),
+      getTotalInvestmentBalance(),
+      getInvestmentAllocation(),
+      getInvestmentBalanceHistoryByType(12),
+    ]);
+
   return (
-    <div className="mx-auto max-w-7xl">
-      <h1 className="text-2xl font-bold">Investments</h1>
-      <p className="mt-2 text-zinc-400">Coming soon.</p>
-    </div>
+    <InvestmentsClient
+      initialData={{
+        investmentAccounts,
+        totalBalanceCents,
+        allocation,
+        balanceHistory,
+      }}
+    />
   );
 }
