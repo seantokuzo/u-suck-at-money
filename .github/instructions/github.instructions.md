@@ -59,7 +59,7 @@ When creating a PR:
 1. **Create PR** (not draft)
 2. **Assign `@seantokuzo`**
 3. **Apply labels**: component + type + `Needs Review`
-4. **Copilot auto-reviews + trigger @claude and @codex reviews via PR comments**
+4. **Copilot auto-reviews** (ensure auto-review is enabled in repo settings)
 5. **Run PR review pipeline** (`.agents/skills/pr-review-pipeline/SKILL.md`)
 
 ## PR Labels

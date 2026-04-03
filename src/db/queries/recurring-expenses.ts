@@ -1,4 +1,4 @@
-import { eq, and, asc, desc } from "drizzle-orm";
+import { eq, and, asc } from "drizzle-orm";
 import { db } from "@/db";
 import { recurringExpenses, categories, accounts } from "@/db/schema";
 import { toMonthlyCents, getNextDueDate, daysUntil } from "@/lib/recurring-utils";

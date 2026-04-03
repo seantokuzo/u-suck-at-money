@@ -1,4 +1,4 @@
-import { eq, and, asc, sql } from "drizzle-orm";
+import { eq, and, asc } from "drizzle-orm";
 import { db } from "@/db";
 import { retirementPlans, hsaPlans, accounts } from "@/db/schema";
 

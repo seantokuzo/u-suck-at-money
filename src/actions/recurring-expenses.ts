@@ -46,7 +46,7 @@ export async function createRecurringExpense(formData: FormData) {
   await db.insert(recurringExpenses).values({
     name,
     amountCents,
-    frequency: frequency as any,
+    frequency: frequency as "weekly" | "biweekly" | "semi_monthly" | "monthly" | "quarterly" | "annual",
     categoryId,
     dueDay: dueDay ? parseInt(dueDay, 10) : null,
     dueMonth: dueMonth ? parseInt(dueMonth, 10) : null,
@@ -83,7 +83,7 @@ export async function updateRecurringExpense(formData: FormData) {
     .set({
       name,
       amountCents,
-      frequency: frequency as any,
+      frequency: frequency as "weekly" | "biweekly" | "semi_monthly" | "monthly" | "quarterly" | "annual",
       categoryId,
       dueDay: dueDay ? parseInt(dueDay, 10) : null,
       dueMonth: dueMonth ? parseInt(dueMonth, 10) : null,

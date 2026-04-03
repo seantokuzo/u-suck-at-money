@@ -101,10 +101,7 @@ export function RecurringExpenseForm({
     ? (expense.amountCents / 100).toFixed(2)
     : "";
 
-  // Determine if we should show dueMonth based on frequency
   const defaultFrequency = expense?.frequency ?? "monthly";
-  const showDueMonth =
-    defaultFrequency === "annual" || defaultFrequency === "quarterly";
 
   return (
     <Modal

@@ -40,8 +40,8 @@ export async function createCategory(formData: FormData) {
       budgetAmountCents,
       sortOrder,
     });
-  } catch (err: any) {
-    if (err?.message?.includes("categories_name_parent_uniq")) {
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message?.includes("categories_name_parent_uniq")) {
       return { error: "A category with that name already exists at this level" };
     }
     return { error: "Failed to create category" };
@@ -80,8 +80,8 @@ export async function updateCategory(formData: FormData) {
         sortOrder,
       })
       .where(eq(categories.id, id));
-  } catch (err: any) {
-    if (err?.message?.includes("categories_name_parent_uniq")) {
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message?.includes("categories_name_parent_uniq")) {
       return { error: "A category with that name already exists at this level" };
     }
     return { error: "Failed to update category" };

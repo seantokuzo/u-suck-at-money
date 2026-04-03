@@ -21,7 +21,7 @@ export async function createAccount(formData: FormData) {
 
   await db.insert(accounts).values({
     name,
-    type: type as any,
+    type: type as "checking" | "savings" | "brokerage" | "401k" | "hsa" | "credit_card" | "other",
     institution,
     currentBalanceCents,
     notes,
@@ -48,7 +48,7 @@ export async function updateAccount(formData: FormData) {
     .update(accounts)
     .set({
       name,
-      type: type as any,
+      type: type as "checking" | "savings" | "brokerage" | "401k" | "hsa" | "credit_card" | "other",
       institution,
       currentBalanceCents,
       notes,

@@ -93,6 +93,7 @@ export const categories = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     name: varchar("name", { length: 100 }).notNull(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     parentId: uuid("parent_id").references((): any => categories.id),
     budgetAmountCents: integer("budget_amount_cents"),
     color: varchar("color", { length: 7 }),

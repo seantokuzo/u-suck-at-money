@@ -1,11 +1,10 @@
-import { sql, desc, asc } from "drizzle-orm";
+import { sql, asc, desc } from "drizzle-orm";
 import { db } from "@/db";
 import { accounts, monthlySnapshots } from "@/db/schema";
 
 // ─── Constants ─────────────────────────────────────────
 
-const INVESTMENT_TYPES = ["brokerage", "401k", "hsa"] as const;
-export type InvestmentAccountType = (typeof INVESTMENT_TYPES)[number];
+export type InvestmentAccountType = "brokerage" | "401k" | "hsa";
 
 // ─── Types ─────────────────────────────────────────────
 

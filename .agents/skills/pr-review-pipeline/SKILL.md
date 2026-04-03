@@ -1,11 +1,11 @@
 ---
 name: pr-review-pipeline
-description: Automated PR review pipeline using GitHub Copilot auto-review with smart merge thresholds. Polls for comments, addresses them, replies inline, and loops until clean. Run after every PR creation.
+description: Automated Copilot review pipeline with dynamic comment thresholds. Polls for Copilot review, addresses comments, replies inline, and loops until clean enough to merge. Run after every PR creation.
 ---
 
 # PR Review Pipeline
 
-Automated multi-round code review workflow using GitHub Copilot. After creating a PR, run this pipeline to ensure all review comments are addressed before merge.
+Automated multi-round code review workflow using **GitHub Copilot** as the sole automated reviewer (runs on your Copilot subscription). After creating a PR, run this pipeline to ensure all review comments are addressed before merge.
 
 ## When to Use
 
@@ -15,47 +15,65 @@ Automated multi-round code review workflow using GitHub Copilot. After creating 
 
 | Reviewer | How It Triggers | What It's Good At |
 |----------|----------------|-------------------|
-| **GitHub Copilot** | Auto-requested via repo settings | Code quality, bugs, patterns, security, performance |
+| **GitHub Copilot** | Auto-requested via repo settings, or manually re-requested | General code quality, patterns, bugs, security |
 
 ### Setup: Enable Copilot Auto-Review
 
 In your GitHub repo: **Settings > Copilot > Code Review > Enable automatic review requests**
 
-This makes Copilot auto-review every PR on open/synchronize. No extra API keys needed — runs on your Copilot subscription.
-
-> **Note:** Copilot code review is a single-model system. You cannot @mention other AI models
-> (e.g. @claude, @codex) in PR comments to trigger alternative reviews. If you want additional
-> AI reviewers, set them up as separate GitHub Actions with their own API keys.
+This makes Copilot auto-review every new PR and every push to an open PR.
 
 ## Pipeline Steps
 
 ### Step 1: Wait for Copilot Review
 
-After creating the PR, Copilot auto-reviews (if enabled). Poll for comments:
+Copilot auto-reviews when the PR is created (if configured). Poll the `requested_reviewers` endpoint — Copilot appears there while reviewing and drops off once it submits.
 
 ```bash
 # Poll every 30s for up to 5 minutes
 for i in {1..10}; do
-  COMMENTS=$(gh api repos/{OWNER}/{REPO}/pulls/{PR_NUMBER}/comments --jq 'length')
-  REVIEWS=$(gh api repos/{OWNER}/{REPO}/pulls/{PR_NUMBER}/reviews --jq 'length')
-  if [ "$COMMENTS" -gt 0 ] || [ "$REVIEWS" -gt 0 ]; then
-    echo "Found $COMMENTS inline comments and $REVIEWS reviews"
-    break
+  PENDING=$(gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/requested_reviewers \
+    --jq '[.users[] | select(.login | test("copilot"; "i"))] | length')
+  if [ "$PENDING" -eq 0 ]; then
+    # Verify Copilot actually submitted a review (not just never assigned)
+    REVIEWED=$(gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/reviews \
+      --jq '[.[] | select(.user.login | test("copilot"; "i"))] | length')
+    if [ "$REVIEWED" -gt 0 ]; then
+      echo "Copilot review complete"
+      break
+    fi
+    echo "Waiting for Copilot to be assigned... (attempt $i/10)"
+  else
+    echo "Copilot is reviewing... (attempt $i/10)"
   fi
-  echo "Waiting for reviews... (attempt $i/10)"
   sleep 30
 done
 ```
 
+> **How it works:** The `requested_reviewers` API returns users that have been asked to review but haven't submitted yet. Once Copilot finishes and submits its review, it drops off that list. This is more reliable than polling for review/comment counts or comparing timestamps.
+>
+> **Note:** Copilot's username may vary (`copilot-pull-request-reviewer[bot]`, `github-copilot[bot]`, etc.). The `test("copilot"; "i")` filter covers known variants. If polling times out, check the PR manually and adjust the filter if needed.
+
 ### Step 2: Read All Comments
 
+**Round 1** — read all top-level comments:
+
 ```bash
-# Get all review comments (inline on diff)
-gh api repos/{OWNER}/{REPO}/pulls/{PR_NUMBER}/comments \
+gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/comments \
   --jq '.[] | select(.in_reply_to_id == null) | {id, user: .user.login, path, line: (.line // .original_line), body: (.body | split("\n")[0])}'
 ```
 
-Focus on **top-level comments only** (not replies from previous fix rounds).
+**Subsequent rounds** — only read NEW comments (use `COMMENTS_BEFORE` from Step 8 as the baseline):
+
+```bash
+# Fetch all top-level comments, grab only the last N (where N = NEW_COMMENTS from Step 10)
+NEW_COMMENTS=... # from Step 10
+gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/comments \
+  --jq --argjson n "$NEW_COMMENTS" \
+  '[.[] | select(.in_reply_to_id == null)] | sort_by(.created_at) | .[-$n:] | .[] | {id, user: .user.login, path, line: (.line // .original_line), body: (.body | split("\n")[0])}'
+```
+
+Focus on **top-level comments only**. In subsequent rounds, ignore already-addressed comments — only process the newest ones since your last push.
 
 ### Step 3: Calculate Smart Threshold
 
@@ -94,7 +112,7 @@ For each comment, categorize and act:
 | **respond** | Reply explaining why no change | Intentional design, false positives, not applicable |
 | **defer** | Acknowledge, note for later | Valid but out of scope for this PR |
 
-**Critical: Be skeptical.** You have MORE context than the reviewer. Before accepting a suggestion:
+**Critical: Be skeptical.** You have MORE context than Copilot. Before accepting a suggestion:
 
 1. Does this apply to our setup?
 2. Is this already handled elsewhere?
@@ -107,14 +125,15 @@ For each comment, categorize and act:
 After all fixes, verify nothing is broken:
 
 ```bash
-npx tsc --noEmit
+# Run the full CI pipeline locally (adapt to your stack)
+# See .github/instructions/ci.instructions.md for project-specific commands
 ```
 
 ### Step 6: Commit and Push
 
 ```bash
 git add -A && git commit -m "$(cat <<'EOF'
-fix(scope): address round N review comments
+fix(scope): address round N Copilot review comments
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 EOF
@@ -128,62 +147,98 @@ Reply to EACH comment in its own thread (never as unlinked PR comments):
 
 ```bash
 # Fixed
-gh api repos/{OWNER}/{REPO}/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies \
+gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies \
   -f body="Fixed — {brief description of what was done}"
 
 # Not applicable
-gh api repos/{OWNER}/{REPO}/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies \
+gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies \
   -f body="Not applicable — {specific reason why this doesn't apply}"
 
 # Deferred
-gh api repos/{OWNER}/{REPO}/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies \
+gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies \
   -f body="Deferred — tracked as GitHub Issue for future work"
 ```
 
-### Step 8: Smart Threshold Check
+### Step 8: Snapshot & Re-Request Copilot Review
 
-After addressing all comments, check whether to request another round:
+After pushing fixes and replying to all comments, **snapshot baselines** then re-request.
 
 ```bash
-ROUND_COMMENTS={number of top-level comments this round}
+# Snapshot BEFORE re-requesting — used by Steps 9 and 10
+REVIEWS_BEFORE=$(gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/reviews \
+  --jq '[.[] | select(.user.login | test("copilot"; "i"))] | length')
+COMMENTS_BEFORE=$(gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/comments \
+  --jq '[.[] | select(.in_reply_to_id == null)] | length')
+```
 
-if [ "$ROUND_COMMENTS" -eq 0 ]; then
+**Then re-request Copilot review via API:**
+
+```bash
+gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/requested_reviewers \
+  -X POST -f 'reviewers[]=copilot-pull-request-reviewer'
+```
+
+> **If the API call fails** (404, 422, or Copilot's reviewer username differs), tell the user:
+> _"Can't re-request Copilot review via API. Please re-request manually in the GitHub UI, then let me know when you've done it."_
+>
+> Wait for the user to confirm before proceeding to Step 9.
+
+### Step 9: Poll for New Copilot Review
+
+After re-request (whether via API or user-triggered), poll `requested_reviewers` until Copilot finishes, then verify a new review was actually submitted:
+
+```bash
+# Wait for Copilot to drop off requested_reviewers
+for i in {1..10}; do
+  PENDING=$(gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/requested_reviewers \
+    --jq '[.users[] | select(.login | test("copilot"; "i"))] | length')
+  if [ "$PENDING" -eq 0 ]; then
+    # Verify Copilot actually submitted a NEW review (not just failed to get assigned)
+    REVIEWS_AFTER=$(gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/reviews \
+      --jq '[.[] | select(.user.login | test("copilot"; "i"))] | length')
+    if [ "$REVIEWS_AFTER" -gt "$REVIEWS_BEFORE" ]; then
+      echo "New Copilot review received"
+      break
+    fi
+    echo "Copilot not pending but no new review yet... (attempt $i/10)"
+  else
+    echo "Copilot still reviewing... (attempt $i/10)"
+  fi
+  sleep 30
+done
+```
+
+### Step 10: Threshold Check & Loop
+
+Count **all new top-level comments** from this round (Copilot + humans — all comments need addressing):
+
+```bash
+# Compare against baseline captured in Step 8
+COMMENTS_AFTER=$(gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR_NUMBER}/comments \
+  --jq '[.[] | select(.in_reply_to_id == null)] | length')
+NEW_COMMENTS=$((COMMENTS_AFTER - COMMENTS_BEFORE))
+
+if [ "$NEW_COMMENTS" -eq 0 ]; then
   echo "CLEAN ROUND — eligible for merge"
-elif [ "$ROUND_COMMENTS" -le "$THRESHOLD" ]; then
-  echo "Under threshold ($ROUND_COMMENTS <= $THRESHOLD) — address and proceed"
+elif [ "$NEW_COMMENTS" -le "$THRESHOLD" ]; then
+  echo "Under threshold ($NEW_COMMENTS <= $THRESHOLD) — address and proceed to merge"
 else
-  echo "Over threshold ($ROUND_COMMENTS > $THRESHOLD) — push fixes and wait for Copilot re-review"
+  echo "Over threshold ($NEW_COMMENTS > $THRESHOLD) — another review round needed"
+  # Go back to Step 2: read new comments, fix, push, re-request
 fi
 ```
 
-### Step 9: Repeat (Minimum 2 Rounds)
+**Loop logic — no minimum rounds:**
+- **0 new comments** → Clean round → merge
+- **Under threshold** → Address comments, push fixes, merge
+- **Over threshold** → Address comments, push fixes, re-request review, loop back to Step 9
 
-The pipeline requires a **minimum of 2 rounds** before merge is eligible:
+### Step 11: Merge
 
-| Round | Purpose |
-|-------|---------|
-| 1 | Initial Copilot review |
-| 2+ | Review fixes, verify clean |
-
-**Merge eligibility:**
-- Minimum 2 rounds completed
-- Last round is either clean (0 new comments) OR under threshold
-- All CI checks passing
-- All inline comments replied to
-
-If still getting significant comments after round 3, report to user with summary.
-
-### Step 10: Merge
-
-After merge eligibility is met:
+After merge eligibility is met (clean round or under threshold with all comments addressed):
 
 ```bash
 gh pr merge {PR_NUMBER} --merge --delete-branch
-```
-
-Then pull the merged changes to local main:
-
-```bash
 git checkout main && git pull origin main
 ```
 
@@ -192,9 +247,38 @@ Report the result:
 ```
 PR #{NUMBER} merged after {N} review rounds:
 - Round 1: {X} Copilot comments
-- Round 2: Clean pass → merged
+- Round 2: {Y} comments addressed, {Z} new
+- Round N: Clean pass → merged
 - PR size: {SIZE} ({LINES} lines, {FILES} files), threshold: {THRESHOLD}
 ```
+
+### Step 12: Prep Next Session Prompt
+
+After merge, prepare a handoff summary so the next Claude session can pick up seamlessly:
+
+```markdown
+## Session Handoff — {BRANCH_NAME}
+
+**What was done:**
+- {Summary of changes merged in this PR}
+
+**Current state:**
+- On `main`, up to date with remote
+- Phase {N} progress: {status}
+
+**What's next:**
+- {Next task/phase from PLANNING.md roadmap}
+
+**Key decisions made:**
+- {Any architectural or design decisions locked during this session}
+
+**Files to read first:**
+- docs/PLANNING.md (check roadmap progress)
+- CLAUDE.md (project conventions)
+- {Any other relevant files}
+```
+
+Present this to the user so they can paste it into the next session.
 
 ## Reply Format
 
@@ -210,17 +294,24 @@ When replying to comments, be specific:
 
 ```bash
 # List PR inline comments (review comments on diff)
-gh api repos/{OWNER}/{REPO}/pulls/{PR}/comments
+gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR}/comments
 
 # Reply to a specific comment (in its thread)
-gh api repos/{OWNER}/{REPO}/pulls/{PR}/comments/{ID}/replies -f body="..."
+gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR}/comments/{ID}/replies -f body="..."
 
 # List PR reviews (approve/request changes)
-gh api repos/{OWNER}/{REPO}/pulls/{PR}/reviews
+gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR}/reviews
 
 # Check PR status
 gh pr view {PR} --json mergeable,mergeStateStatus,statusCheckRollup
 
 # Get PR size stats
 gh pr view {PR} --json additions,deletions,changedFiles
+
+# Check who's still pending review (Copilot drops off when done)
+gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR}/requested_reviewers
+
+# Re-request Copilot review (may need username adjustment)
+gh api repos/{{OWNER}}/{{REPO}}/pulls/{PR}/requested_reviewers \
+  -X POST -f 'reviewers[]=copilot-pull-request-reviewer'
 ```

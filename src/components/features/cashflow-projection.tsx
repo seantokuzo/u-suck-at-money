@@ -56,6 +56,7 @@ export function CashflowProjection({ projections }: CashflowProjectionProps) {
   // Build cumulative totals for the table
   let cumulativeCents = 0;
   const tableData = projections.map((p) => {
+    // eslint-disable-next-line react-hooks/immutability
     cumulativeCents += p.projectedNetCents;
     return {
       month: p.month,
