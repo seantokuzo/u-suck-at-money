@@ -60,6 +60,7 @@ export function TransactionSplitModal({
   useEffect(() => {
     if (!data) return;
     if (data.splits && data.splits.length >= 2) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRows(
         data.splits.map((s) => ({
           categoryId: s.categoryId,

@@ -82,6 +82,25 @@ describe("toCsv", () => {
     expect(lines[2]).toBe("123");
   });
 
+  it("does not sanitize negative numbers (non-string origin)", () => {
+    const rows = [
+      { amount: -1500, name: "Refund" },
+      { amount: -42, name: "Credit" },
+    ];
+    const csv = toCsv(rows);
+    const lines = csv.split("\n");
+    expect(lines[1]).toBe("-1500,Refund");
+    expect(lines[2]).toBe("-42,Credit");
+  });
+
+  it("sanitizes whitespace-prefixed formula strings", () => {
+    const rows = [{ desc: " =SUM(A1)" }, { desc: "  +cmd" }];
+    const csv = toCsv(rows);
+    const lines = csv.split("\n");
+    expect(lines[1]).toBe("' =SUM(A1)");
+    expect(lines[2]).toBe("'  +cmd");
+  });
+
   it("handles multiple rows with all edge cases", () => {
     const rows = [
       { id: 1, name: "Normal", notes: "" },

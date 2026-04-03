@@ -34,6 +34,6 @@ export async function getAccountsByType(type: string) {
   return db
     .select()
     .from(accounts)
-    .where(eq(accounts.type, type as any))
+    .where(eq(accounts.type, type as "checking" | "savings" | "brokerage" | "401k" | "hsa" | "credit_card" | "other"))
     .orderBy(asc(accounts.name));
 }

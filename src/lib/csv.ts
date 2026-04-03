@@ -1,9 +1,10 @@
 /** CSV formula injection prefixes — spreadsheet apps treat these as formulas */
 const FORMULA_PREFIXES = ["=", "+", "-", "@"];
 
-/** Sanitize a string value to prevent CSV injection */
+/** Sanitize a string value to prevent CSV injection (only for string-origin values) */
 function sanitize(str: string): string {
-  if (FORMULA_PREFIXES.some((p) => str.startsWith(p))) {
+  const trimmed = str.trimStart();
+  if (FORMULA_PREFIXES.some((p) => trimmed.startsWith(p))) {
     return `'${str}`;
   }
   return str;
@@ -18,7 +19,8 @@ export function toCsv(rows: Record<string, unknown>[]): string {
     const values = headers.map((h) => {
       const val = row[h];
       if (val === null || val === undefined) return "";
-      const str = sanitize(String(val));
+      // Only sanitize string-origin values — numbers, booleans etc. are safe
+      const str = typeof val === "string" ? sanitize(val) : String(val);
       // Escape fields that contain commas, quotes, or newlines
       if (str.includes(",") || str.includes('"') || str.includes("\n")) {
         return `"${str.replace(/"/g, '""')}"`;

@@ -50,8 +50,8 @@ export async function importTransactions(data: ImportData) {
       .returning({ id: imports.id });
 
     importId = importRecord.id;
-  } catch (err: any) {
-    if (err?.message?.includes("imports_file_hash_uniq")) {
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message?.includes("imports_file_hash_uniq")) {
       return { error: "This file has already been imported" };
     }
     return { error: "Failed to create import record" };
@@ -116,14 +116,14 @@ export async function importTransactions(data: ImportData) {
       importedCount: newRows.length,
       duplicateCount,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     // 8. Mark import as failed on any error
     await db
       .update(imports)
       .set({ status: "failed" })
       .where(eq(imports.id, importId));
 
-    return { error: "Import failed: " + (err?.message ?? "unknown error") };
+    return { error: "Import failed: " + (err instanceof Error ? err.message : "unknown error") };
   }
 }
 

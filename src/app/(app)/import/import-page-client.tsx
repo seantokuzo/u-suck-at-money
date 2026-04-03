@@ -148,8 +148,8 @@ export function ImportPageClient({ accounts, patterns, categories }: ImportPageC
         const detected = detectColumns(parsed.headers, parsed.rows);
         store.setFile(file, parsed, hash);
         store.setColumnMapping(detected);
-      } catch (err: any) {
-        setParseError(err?.message ?? "Failed to parse file");
+      } catch (err: unknown) {
+        setParseError(err instanceof Error ? err.message : "Failed to parse file");
       }
     },
     [store],
