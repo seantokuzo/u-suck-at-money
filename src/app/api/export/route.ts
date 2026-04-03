@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { toCsv } from "@/lib/csv";
 import { db } from "@/db";
 import {
   transactions,
@@ -21,28 +22,6 @@ async function requireAuth() {
   const session = await auth();
   if (!session?.user) return null;
   return session;
-}
-
-// ─── CSV Helper ─────────────────────────────────────────
-
-function toCsv(rows: Record<string, unknown>[]): string {
-  if (rows.length === 0) return "";
-  const headers = Object.keys(rows[0]);
-  const lines = [headers.join(",")];
-  for (const row of rows) {
-    const values = headers.map((h) => {
-      const val = row[h];
-      if (val === null || val === undefined) return "";
-      const str = String(val);
-      // Escape fields that contain commas, quotes, or newlines
-      if (str.includes(",") || str.includes('"') || str.includes("\n")) {
-        return `"${str.replace(/"/g, '""')}"`;
-      }
-      return str;
-    });
-    lines.push(values.join(","));
-  }
-  return lines.join("\n");
 }
 
 // ─── GET /api/export?type=transactions|accounts|all ─────
