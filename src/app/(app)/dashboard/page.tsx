@@ -17,6 +17,9 @@ import {
   getTotalInvestmentBalance,
   getInvestmentAllocation,
 } from "@/db/queries/investments";
+import { getActiveGoals } from "@/db/queries/goals";
+import { getUpcomingEvents } from "@/db/queries/events";
+import { getActiveWishlistItems } from "@/db/queries/wishlist";
 import { DashboardCharts } from "./dashboard-charts";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -68,6 +71,9 @@ export default async function DashboardPage() {
     retirementSummary,
     totalInvestmentBalance,
     investmentAllocation,
+    activeGoals,
+    upcomingEvents,
+    activeWishlistItems,
   ] = await Promise.all([
     getNetWorth(),
     getMonthlySnapshot(currentMonth()),
@@ -81,6 +87,9 @@ export default async function DashboardPage() {
     getRetirementSummary(),
     getTotalInvestmentBalance(),
     getInvestmentAllocation(),
+    getActiveGoals(),
+    getUpcomingEvents(60),
+    getActiveWishlistItems(),
   ]);
 
   const projectedNet = projectedIncome - projectedRecurring;
@@ -274,6 +283,162 @@ export default async function DashboardPage() {
         </section>
       )}
 
+      {/* ── Goals Progress ────────────────────────────── */}
+      {activeGoals.length > 0 && (() => {
+        const GOAL_TYPE_LABELS: Record<string, string> = {
+          savings: "Savings",
+          checking_target: "Checking",
+          debt_payoff: "Debt Payoff",
+          investment: "Investment",
+        };
+        return (
+          <section className="mt-10">
+            <div className="mb-4 flex items-baseline justify-between">
+              <h3 className="text-lg font-semibold text-zinc-100">Goals</h3>
+              <Link
+                href="/goals"
+                className="text-sm text-blue-400 hover:text-blue-300"
+              >
+                View all &rarr;
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              {activeGoals.slice(0, 3).map((goal) => {
+                const pct =
+                  goal.targetAmountCents > 0
+                    ? Math.round(
+                        (goal.currentAmountCents / goal.targetAmountCents) * 100,
+                      )
+                    : 0;
+                return (
+                  <Card key={goal.id}>
+                    <CardContent>
+                      <div className="mb-3 flex items-center justify-between">
+                        <p className="truncate text-sm font-medium text-zinc-200">
+                          {goal.name}
+                        </p>
+                        <Badge variant="default">
+                          {GOAL_TYPE_LABELS[goal.type] ?? goal.type}
+                        </Badge>
+                      </div>
+                      <div className="h-2.5 overflow-hidden rounded-full bg-zinc-800">
+                        <div
+                          className="h-full rounded-full bg-emerald-500 transition-all"
+                          style={{ width: `${Math.min(100, pct)}%` }}
+                        />
+                      </div>
+                      <div className="mt-2 flex items-center justify-between text-xs">
+                        <span className="text-zinc-400">
+                          {formatCents(goal.currentAmountCents)} /{" "}
+                          {formatCents(goal.targetAmountCents)} ({pct}%)
+                        </span>
+                        {goal.targetDate && (
+                          <span className="text-zinc-500">
+                            {formatDate(goal.targetDate)}
+                          </span>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* ── Upcoming Events ──────────────────────────── */}
+      {upcomingEvents.length > 0 && (() => {
+        const EVENT_STATUS_VARIANT: Record<string, "warning" | "info" | "success"> = {
+          planned: "warning",
+          booked: "info",
+          paid: "success",
+        };
+        return (
+          <section className="mt-10">
+            <div className="mb-4 flex items-baseline gap-2">
+              <h3 className="text-lg font-semibold text-zinc-100">
+                Upcoming Events
+              </h3>
+              <span className="text-sm text-zinc-500">(next 60 days)</span>
+            </div>
+
+            <Card>
+              <CardContent>
+                <ul className="divide-y divide-zinc-800">
+                  {upcomingEvents.slice(0, 5).map((event) => {
+                    const daysRemaining = event.targetDate
+                      ? Math.max(
+                          0,
+                          Math.ceil(
+                            (new Date(event.targetDate).getTime() - Date.now()) /
+                              (1000 * 60 * 60 * 24),
+                          ),
+                        )
+                      : null;
+                    return (
+                      <li
+                        key={event.id}
+                        className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
+                      >
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          {event.categoryColor && (
+                            <span
+                              className="h-2.5 w-2.5 shrink-0 rounded-full"
+                              style={{ backgroundColor: event.categoryColor }}
+                            />
+                          )}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="truncate text-sm text-zinc-200">
+                                {event.name}
+                              </p>
+                              <Badge
+                                variant={
+                                  EVENT_STATUS_VARIANT[event.status] ?? "default"
+                                }
+                              >
+                                {event.status}
+                              </Badge>
+                            </div>
+                            {event.targetDate && daysRemaining !== null && (
+                              <p className="mt-0.5 text-xs text-zinc-500">
+                                {formatDate(event.targetDate)}
+                                {" \u00b7 "}
+                                {daysRemaining === 0
+                                  ? "Today"
+                                  : daysRemaining === 1
+                                    ? "1 day away"
+                                    : `${daysRemaining} days away`}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {event.estimatedCostCents != null &&
+                          event.estimatedCostCents > 0 && (
+                          <span className="ml-4 text-sm font-medium text-zinc-300">
+                            {formatCents(event.estimatedCostCents)}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </CardContent>
+              <div className="mt-4 border-t border-zinc-800 pt-4">
+                <Link
+                  href="/events"
+                  className="text-sm text-blue-400 hover:text-blue-300"
+                >
+                  View all events &rarr;
+                </Link>
+              </div>
+            </Card>
+          </section>
+        );
+      })()}
+
       {/* ── Account Summary ───────────────────────────── */}
       <section className="mt-10">
         <h3 className="mb-4 text-lg font-semibold text-zinc-100">Accounts</h3>
@@ -454,6 +619,78 @@ export default async function DashboardPage() {
           </Card>
         )}
       </section>
+
+      {/* ── Wishlist Spotlight ────────────────────────── */}
+      {activeWishlistItems.length > 0 && (() => {
+        const PRIORITY_VARIANT: Record<string, string> = {
+          p1: "bg-red-600/20 text-red-400 border border-red-600/30",
+          p2: "bg-amber-600/20 text-amber-400 border border-amber-600/30",
+          p3: "bg-zinc-600/20 text-zinc-400 border border-zinc-600/30",
+        };
+        const STATUS_LABELS: Record<string, string> = {
+          wishlist: "Wishlist",
+          researching: "Researching",
+          ready_to_buy: "Ready to Buy",
+        };
+        const totalWishlistCents = activeWishlistItems.reduce(
+          (sum, item) => sum + (item.estimatedCostCents ?? 0),
+          0,
+        );
+        return (
+          <section className="mt-10">
+            <div className="mb-4 flex items-baseline justify-between">
+              <div className="flex items-baseline gap-3">
+                <h3 className="text-lg font-semibold text-zinc-100">
+                  Wishlist
+                </h3>
+                <span className="text-sm text-zinc-500">
+                  {formatCents(totalWishlistCents)} total
+                </span>
+              </div>
+              <Link
+                href="/wishlist"
+                className="text-sm text-blue-400 hover:text-blue-300"
+              >
+                View all &rarr;
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              {activeWishlistItems.slice(0, 3).map((item) => (
+                <Card key={item.id}>
+                  <CardContent>
+                    <div className="mb-2 flex items-center justify-between">
+                      <p className="truncate text-sm font-medium text-zinc-200">
+                        {item.name}
+                      </p>
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+                          PRIORITY_VARIANT[item.priority] ?? PRIORITY_VARIANT.p3,
+                        )}
+                      >
+                        {item.priority.toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      {item.estimatedCostCents ? (
+                        <span className="font-medium text-zinc-300">
+                          {formatCents(item.estimatedCostCents)}
+                        </span>
+                      ) : (
+                        <span className="text-zinc-500">No estimate</span>
+                      )}
+                      <Badge variant="default">
+                        {STATUS_LABELS[item.status] ?? item.status}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* ── Charts ──────────────────────────────────── */}
       <section className="mt-10 mb-10">
