@@ -1,10 +1,32 @@
+import {
+  getRetirementPlans,
+  getHsaPlans,
+  getRetirementSummary,
+} from "@/db/queries/retirement";
+import { getAccounts } from "@/db/queries/accounts";
+import { RetirementClient } from "./retirement-client";
+
 export const metadata = { title: "Retirement" };
 
-export default function RetirementPage() {
+const CURRENT_YEAR = 2026;
+
+export default async function RetirementPage() {
+  const [plans401k, hsaPlansResult, summary, accounts] = await Promise.all([
+    getRetirementPlans({ year: CURRENT_YEAR }),
+    getHsaPlans({ year: CURRENT_YEAR }),
+    getRetirementSummary(CURRENT_YEAR),
+    getAccounts(),
+  ]);
+
   return (
-    <div className="mx-auto max-w-7xl">
-      <h1 className="text-2xl font-bold">Retirement</h1>
-      <p className="mt-2 text-zinc-400">Coming soon.</p>
-    </div>
+    <RetirementClient
+      initialData={{
+        plans401k,
+        hsaPlans: hsaPlansResult,
+        summary,
+        year: CURRENT_YEAR,
+      }}
+      accounts={accounts}
+    />
   );
 }

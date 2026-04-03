@@ -12,6 +12,11 @@ import {
   getUpcomingBills,
   getTotalMonthlyRecurring,
 } from "@/db/queries/recurring-expenses";
+import { getRetirementSummary } from "@/db/queries/retirement";
+import {
+  getTotalInvestmentBalance,
+  getInvestmentAllocation,
+} from "@/db/queries/investments";
 import { DashboardCharts } from "./dashboard-charts";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -60,6 +65,9 @@ export default async function DashboardPage() {
     projectedIncome,
     projectedRecurring,
     upcomingBills,
+    retirementSummary,
+    totalInvestmentBalance,
+    investmentAllocation,
   ] = await Promise.all([
     getNetWorth(),
     getMonthlySnapshot(currentMonth()),
@@ -70,6 +78,9 @@ export default async function DashboardPage() {
     getTotalMonthlyIncome(),
     getTotalMonthlyRecurring(),
     getUpcomingBills(14),
+    getRetirementSummary(),
+    getTotalInvestmentBalance(),
+    getInvestmentAllocation(),
   ]);
 
   const projectedNet = projectedIncome - projectedRecurring;
@@ -80,7 +91,7 @@ export default async function DashboardPage() {
       <p className="mt-2 text-zinc-400">Your financial command center.</p>
 
       {/* ── KPI Cards ─────────────────────────────────── */}
-      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <KpiCard
           label="Net Worth"
           value={formatCents(netWorth)}
@@ -107,6 +118,26 @@ export default async function DashboardPage() {
           value={snapshot ? formatCents(snapshot.totalIncomeCents) : "--"}
           colorClass={snapshot ? "text-green-400" : "text-zinc-500"}
         />
+
+        {/* Investment Portfolio KPI */}
+        <Link href="/investments" className="block">
+          <Card className="h-full transition-colors hover:bg-zinc-800/80">
+            <p className="text-sm text-zinc-400">Investments</p>
+            <p className="mt-2 text-2xl font-bold text-purple-400">
+              {formatCents(totalInvestmentBalance)}
+            </p>
+            {investmentAllocation.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {investmentAllocation.map((group) => (
+                  <Badge key={group.type} variant="default">
+                    {TYPE_LABELS[group.type] ?? group.type}{" "}
+                    {formatCents(group.totalCents)}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </Card>
+        </Link>
       </div>
 
       {/* ── Projected Monthly Summary ─────────────────── */}
@@ -142,6 +173,106 @@ export default async function DashboardPage() {
           </div>
         </div>
       </Card>
+
+      {/* ── Retirement Progress ─────────────────────────── */}
+      {(retirementSummary.total401kLimitCents > 0 ||
+        retirementSummary.totalHsaLimitCents > 0) && (
+        <section className="mt-10">
+          <div className="mb-4 flex items-baseline justify-between">
+            <h3 className="text-lg font-semibold text-zinc-100">
+              Retirement Progress
+            </h3>
+            <Link
+              href="/retirement"
+              className="text-sm text-blue-400 hover:text-blue-300"
+            >
+              View details &rarr;
+            </Link>
+          </div>
+
+          <Card>
+            <CardContent>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                {/* 401k Progress */}
+                {retirementSummary.total401kLimitCents > 0 && (
+                  <div>
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-sm font-medium text-zinc-200">
+                        401k
+                      </span>
+                      <span className="text-sm text-zinc-400">
+                        {formatCents(retirementSummary.total401kContributionsCents)}{" "}
+                        / {formatCents(retirementSummary.total401kLimitCents)}
+                      </span>
+                    </div>
+                    <div className="h-3 overflow-hidden rounded-full bg-zinc-800">
+                      <div
+                        className="h-full rounded-full bg-green-500 transition-all"
+                        style={{
+                          width: `${Math.min(100, (retirementSummary.total401kContributionsCents / retirementSummary.total401kLimitCents) * 100)}%`,
+                        }}
+                      />
+                    </div>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      {Math.round(
+                        (retirementSummary.total401kContributionsCents /
+                          retirementSummary.total401kLimitCents) *
+                          100,
+                      )}
+                      % of annual limit
+                    </p>
+                  </div>
+                )}
+
+                {/* HSA Progress */}
+                {retirementSummary.totalHsaLimitCents > 0 && (
+                  <div>
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-sm font-medium text-zinc-200">
+                        HSA
+                      </span>
+                      <span className="text-sm text-zinc-400">
+                        {formatCents(retirementSummary.totalHsaContributionsCents)}{" "}
+                        / {formatCents(retirementSummary.totalHsaLimitCents)}
+                      </span>
+                    </div>
+                    <div className="h-3 overflow-hidden rounded-full bg-zinc-800">
+                      <div
+                        className="h-full rounded-full bg-blue-500 transition-all"
+                        style={{
+                          width: `${Math.min(100, (retirementSummary.totalHsaContributionsCents / retirementSummary.totalHsaLimitCents) * 100)}%`,
+                        }}
+                      />
+                    </div>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      {Math.round(
+                        (retirementSummary.totalHsaContributionsCents /
+                          retirementSummary.totalHsaLimitCents) *
+                          100,
+                      )}
+                      % of annual limit
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Employer Match Estimate */}
+              {retirementSummary.totalEmployerMatchCents > 0 && (
+                <div className="mt-4 border-t border-zinc-800 pt-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-zinc-400">
+                      Estimated employer match
+                    </span>
+                    <span className="text-sm font-semibold text-green-400">
+                      {formatCents(retirementSummary.totalEmployerMatchCents)}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       {/* ── Account Summary ───────────────────────────── */}
       <section className="mt-10">
