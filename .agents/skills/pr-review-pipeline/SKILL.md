@@ -1,65 +1,43 @@
 ---
 name: pr-review-pipeline
-description: Automated triple-reviewer PR pipeline — Copilot auto-review + @claude + @codex triggers (all on Copilot subscription) with smart merge thresholds. Polls for comments, addresses them, replies inline, and loops until clean. Run after every PR creation.
+description: Automated PR review pipeline using GitHub Copilot auto-review with smart merge thresholds. Polls for comments, addresses them, replies inline, and loops until clean. Run after every PR creation.
 ---
 
 # PR Review Pipeline
 
-Automated multi-round, multi-reviewer code review workflow. After creating a PR, run this pipeline to ensure all review comments are addressed before merge.
+Automated multi-round code review workflow using GitHub Copilot. After creating a PR, run this pipeline to ensure all review comments are addressed before merge.
 
 ## When to Use
 
 **ALWAYS** after creating a PR via `gh pr create`. This is a mandatory step in the workflow.
 
-## Reviewers
-
-All three reviewers run on your **GitHub Copilot subscription** — zero Anthropic API cost.
+## Reviewer
 
 | Reviewer | How It Triggers | What It's Good At |
 |----------|----------------|-------------------|
-| **GitHub Copilot** | Auto-requested via repo settings | General code quality, patterns, bugs |
-| **@claude** | Comment posted on PR by agent | Deep reasoning, security, architecture |
-| **@codex** | Comment posted on PR by agent | Performance, optimization, code smells |
+| **GitHub Copilot** | Auto-requested via repo settings | Code quality, bugs, patterns, security, performance |
 
 ### Setup: Enable Copilot Auto-Review
 
 In your GitHub repo: **Settings > Copilot > Code Review > Enable automatic review requests**
 
-This makes Copilot auto-review every PR. The `@claude` and `@codex` reviews are triggered by comments posted as part of this pipeline.
+This makes Copilot auto-review every PR on open/synchronize. No extra API keys needed — runs on your Copilot subscription.
+
+> **Note:** Copilot code review is a single-model system. You cannot @mention other AI models
+> (e.g. @claude, @codex) in PR comments to trigger alternative reviews. If you want additional
+> AI reviewers, set them up as separate GitHub Actions with their own API keys.
 
 ## Pipeline Steps
 
-### Step 1: Trigger All Reviewers
+### Step 1: Wait for Copilot Review
 
-After creating the PR, immediately post comments to trigger the additional reviewers:
-
-```bash
-# Copilot auto-reviews (already triggered by PR creation if configured)
-
-# Trigger @claude review (uses Copilot subscription)
-gh pr comment {PR_NUMBER} --body "@claude Review this entire PR. Focus on:
-- Bugs and logic errors
-- Security vulnerabilities
-- Adherence to project conventions in CLAUDE.md
-- Missing error handling or edge cases"
-
-# Trigger @codex review (uses Copilot subscription)
-gh pr comment {PR_NUMBER} --body "@codex Review this entire PR. Focus on:
-- Performance issues and optimization opportunities
-- Code smells and maintainability
-- Unused code or imports
-- Type safety concerns"
-```
-
-### Step 2: Wait for Reviews
-
-All three reviewers need time to analyze the PR.
+After creating the PR, Copilot auto-reviews (if enabled). Poll for comments:
 
 ```bash
-# Poll every 30s for up to 5 minutes (three reviewers need time)
+# Poll every 30s for up to 5 minutes
 for i in {1..10}; do
-  COMMENTS=$(gh api repos/seantokuzo/u-suck-at-money/pulls/{PR_NUMBER}/comments --jq 'length')
-  REVIEWS=$(gh api repos/seantokuzo/u-suck-at-money/pulls/{PR_NUMBER}/reviews --jq 'length')
+  COMMENTS=$(gh api repos/{OWNER}/{REPO}/pulls/{PR_NUMBER}/comments --jq 'length')
+  REVIEWS=$(gh api repos/{OWNER}/{REPO}/pulls/{PR_NUMBER}/reviews --jq 'length')
   if [ "$COMMENTS" -gt 0 ] || [ "$REVIEWS" -gt 0 ]; then
     echo "Found $COMMENTS inline comments and $REVIEWS reviews"
     break
@@ -69,17 +47,17 @@ for i in {1..10}; do
 done
 ```
 
-### Step 3: Read All Comments
+### Step 2: Read All Comments
 
 ```bash
 # Get all review comments (inline on diff)
-gh api repos/seantokuzo/u-suck-at-money/pulls/{PR_NUMBER}/comments \
+gh api repos/{OWNER}/{REPO}/pulls/{PR_NUMBER}/comments \
   --jq '.[] | select(.in_reply_to_id == null) | {id, user: .user.login, path, line: (.line // .original_line), body: (.body | split("\n")[0])}'
 ```
 
 Focus on **top-level comments only** (not replies from previous fix rounds).
 
-### Step 4: Calculate Smart Threshold
+### Step 3: Calculate Smart Threshold
 
 Determine the comment threshold based on PR size:
 
@@ -106,7 +84,7 @@ fi
 echo "PR size: $SIZE ($TOTAL_LINES lines, $CHANGED_FILES files) — threshold: $THRESHOLD comments"
 ```
 
-### Step 5: Categorize & Fix Every Comment
+### Step 4: Categorize & Fix Every Comment
 
 For each comment, categorize and act:
 
@@ -116,7 +94,7 @@ For each comment, categorize and act:
 | **respond** | Reply explaining why no change | Intentional design, false positives, not applicable |
 | **defer** | Acknowledge, note for later | Valid but out of scope for this PR |
 
-**Critical: Be skeptical.** You have MORE context than the reviewers. Before accepting a suggestion:
+**Critical: Be skeptical.** You have MORE context than the reviewer. Before accepting a suggestion:
 
 1. Does this apply to our setup?
 2. Is this already handled elsewhere?
@@ -124,16 +102,15 @@ For each comment, categorize and act:
 4. Does the fix add complexity for marginal benefit?
 5. Would a human reviewer with full project context make this same comment?
 
-### Step 6: Build Verify
+### Step 5: Build Verify
 
 After all fixes, verify nothing is broken:
 
 ```bash
-# Run the full CI pipeline locally (adapt to your stack)
-# See .github/instructions/ci.instructions.md for project-specific commands
+npx tsc --noEmit
 ```
 
-### Step 7: Commit and Push
+### Step 6: Commit and Push
 
 ```bash
 git add -A && git commit -m "$(cat <<'EOF'
@@ -145,25 +122,25 @@ EOF
 git push origin {BRANCH}
 ```
 
-### Step 8: Reply Inline to Every Comment
+### Step 7: Reply Inline to Every Comment
 
 Reply to EACH comment in its own thread (never as unlinked PR comments):
 
 ```bash
 # Fixed
-gh api repos/seantokuzo/u-suck-at-money/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies \
+gh api repos/{OWNER}/{REPO}/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies \
   -f body="Fixed — {brief description of what was done}"
 
 # Not applicable
-gh api repos/seantokuzo/u-suck-at-money/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies \
+gh api repos/{OWNER}/{REPO}/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies \
   -f body="Not applicable — {specific reason why this doesn't apply}"
 
 # Deferred
-gh api repos/seantokuzo/u-suck-at-money/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies \
+gh api repos/{OWNER}/{REPO}/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies \
   -f body="Deferred — tracked as GitHub Issue for future work"
 ```
 
-### Step 9: Smart Threshold Check
+### Step 8: Smart Threshold Check
 
 After addressing all comments, check whether to request another round:
 
@@ -175,33 +152,28 @@ if [ "$ROUND_COMMENTS" -eq 0 ]; then
 elif [ "$ROUND_COMMENTS" -le "$THRESHOLD" ]; then
   echo "Under threshold ($ROUND_COMMENTS <= $THRESHOLD) — address and proceed"
 else
-  echo "Over threshold ($ROUND_COMMENTS > $THRESHOLD) — requesting another review round"
-  # Push fixes will auto-trigger Copilot re-review
-  # Re-trigger @claude and @codex for fresh review of fixes:
-  gh pr comment {PR_NUMBER} --body "@claude Review the latest changes addressing previous review comments."
-  gh pr comment {PR_NUMBER} --body "@codex Review the latest changes addressing previous review comments."
+  echo "Over threshold ($ROUND_COMMENTS > $THRESHOLD) — push fixes and wait for Copilot re-review"
 fi
 ```
 
-### Step 10: Repeat (Minimum 3 Rounds)
+### Step 9: Repeat (Minimum 2 Rounds)
 
-The pipeline requires a **minimum of 3 rounds** before merge is eligible:
+The pipeline requires a **minimum of 2 rounds** before merge is eligible:
 
-| Round | Reviewers | Purpose |
-|-------|-----------|---------|
-| 1 | Copilot + @claude + @codex | Initial review — three AI perspectives |
-| 2 | Copilot (auto) + @claude/@codex (if over threshold) | Review fixes, catch regressions |
-| 3+ | As needed based on threshold | Final polish |
+| Round | Purpose |
+|-------|---------|
+| 1 | Initial Copilot review |
+| 2+ | Review fixes, verify clean |
 
 **Merge eligibility:**
-- Minimum 3 rounds completed
+- Minimum 2 rounds completed
 - Last round is either clean (0 new comments) OR under threshold
 - All CI checks passing
 - All inline comments replied to
 
 If still getting significant comments after round 3, report to user with summary.
 
-### Step 11: Merge
+### Step 10: Merge
 
 After merge eligibility is met:
 
@@ -219,9 +191,8 @@ Report the result:
 
 ```
 PR #{NUMBER} merged after {N} review rounds:
-- Round 1: {X} comments (Copilot: {a}, @claude: {b}, @codex: {c})
-- Round 2: {Y} comments addressed
-- Round 3: Clean pass → merged
+- Round 1: {X} Copilot comments
+- Round 2: Clean pass → merged
 - PR size: {SIZE} ({LINES} lines, {FILES} files), threshold: {THRESHOLD}
 ```
 
@@ -239,23 +210,17 @@ When replying to comments, be specific:
 
 ```bash
 # List PR inline comments (review comments on diff)
-gh api repos/seantokuzo/u-suck-at-money/pulls/{PR}/comments
+gh api repos/{OWNER}/{REPO}/pulls/{PR}/comments
 
 # Reply to a specific comment (in its thread)
-gh api repos/seantokuzo/u-suck-at-money/pulls/{PR}/comments/{ID}/replies -f body="..."
+gh api repos/{OWNER}/{REPO}/pulls/{PR}/comments/{ID}/replies -f body="..."
 
 # List PR reviews (approve/request changes)
-gh api repos/seantokuzo/u-suck-at-money/pulls/{PR}/reviews
+gh api repos/{OWNER}/{REPO}/pulls/{PR}/reviews
 
 # Check PR status
 gh pr view {PR} --json mergeable,mergeStateStatus,statusCheckRollup
 
 # Get PR size stats
 gh pr view {PR} --json additions,deletions,changedFiles
-
-# Trigger @claude review
-gh pr comment {PR} --body "@claude Review this PR for bugs and security issues"
-
-# Trigger @codex review
-gh pr comment {PR} --body "@codex Review this PR for performance and code quality"
 ```
