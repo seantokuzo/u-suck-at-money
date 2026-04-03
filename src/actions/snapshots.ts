@@ -5,6 +5,9 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { transactions, accounts, monthlySnapshots } from "@/db/schema";
 import { getCategorySpend, getMonthlySnapshot } from "@/db/queries/dashboard";
+import { getTotalMonthlyIncome, getActiveIncomeSources } from "@/db/queries/income";
+import { getTotalMonthlyRecurring, getActiveRecurringExpenses } from "@/db/queries/recurring-expenses";
+import { toMonthlyCents } from "@/lib/recurring-utils";
 
 // ─── Helpers ───────────────────────────────────────────
 
@@ -169,13 +172,97 @@ export async function generateAllMissingSnapshots() {
 // ─── Fetch Analysis Data ──────────────────────────────
 
 /**
- * Fetch category spend and snapshot for a given month.
+ * Fetch category spend, snapshot, and projected income/expense data for a given month.
  * Used by the analysis page month selector to load data client-side.
  */
 export async function fetchAnalysisData(month: string) {
-  const [categorySpend, snapshot] = await Promise.all([
-    getCategorySpend(month),
-    getMonthlySnapshot(month),
-  ]);
-  return { categorySpend, snapshot };
+  const [categorySpend, snapshot, projectedIncome, projectedExpenses] =
+    await Promise.all([
+      getCategorySpend(month),
+      getMonthlySnapshot(month),
+      getTotalMonthlyIncome(),
+      getTotalMonthlyRecurring(),
+    ]);
+
+  return {
+    categorySpend,
+    snapshot,
+    projectedIncomeCents: projectedIncome,
+    projectedExpensesCents: projectedExpenses,
+    projectedNetCents: projectedIncome - projectedExpenses,
+  };
+}
+
+// ─── Fetch Snapshot with Projections ──────────────────
+
+/**
+ * Fetch a monthly snapshot enriched with projected income & expense data.
+ * Includes per-source income breakdown and per-expense recurring breakdown
+ * for dashboard widgets and detailed projection views.
+ */
+export async function fetchSnapshotWithProjections(month: string) {
+  const [snapshot, projectedIncome, projectedExpenses, activeSources, activeExpenses] =
+    await Promise.all([
+      getMonthlySnapshot(month),
+      getTotalMonthlyIncome(),
+      getTotalMonthlyRecurring(),
+      getActiveIncomeSources(),
+      getActiveRecurringExpenses(),
+    ]);
+
+  // Income breakdown: { sourceId: { name, type, monthlyCents } }
+  const incomeBreakdown: Record<
+    string,
+    { name: string; type: string; monthlyCents: number }
+  > = {};
+  for (const source of activeSources) {
+    const net = source.netPerPaycheckCents ?? 0;
+    let monthlyCents: number;
+
+    switch (source.paySchedule) {
+      case "biweekly":
+        monthlyCents = Math.round((net * 26) / 12);
+        break;
+      case "semi_monthly":
+        monthlyCents = net * 2;
+        break;
+      case "monthly":
+        monthlyCents = net;
+        break;
+      default:
+        monthlyCents = net;
+        break;
+    }
+
+    incomeBreakdown[source.id] = {
+      name: source.name,
+      type: source.type,
+      monthlyCents,
+    };
+  }
+
+  // Recurring expense breakdown: { expenseId: { name, monthlyCents, frequency, categoryId } }
+  const recurringBreakdown: Record<
+    string,
+    { name: string; monthlyCents: number; frequency: string; categoryId: string | null }
+  > = {};
+  for (const expense of activeExpenses) {
+    recurringBreakdown[expense.id] = {
+      name: expense.name,
+      monthlyCents: toMonthlyCents(expense.amountCents, expense.frequency),
+      frequency: expense.frequency,
+      categoryId: expense.categoryId,
+    };
+  }
+
+  return {
+    snapshot,
+    projected: {
+      incomeCents: projectedIncome,
+      expensesCents: projectedExpenses,
+      netCents: projectedIncome - projectedExpenses,
+    },
+    incomeBreakdown,
+    recurringBreakdown,
+  };
 }

@@ -201,6 +201,65 @@ export async function getCategoryBudgetVsActual(
   );
 }
 
+// ─── Cashflow Projection Queries ──────────────────────
+
+export interface ProjectedMonthlyCashflow {
+  projectedIncomeCents: number;
+  projectedExpensesCents: number;
+  projectedNetCents: number;
+}
+
+/** Get projected monthly cashflow: total income - total recurring expenses */
+export async function getProjectedMonthlyCashflow(): Promise<ProjectedMonthlyCashflow> {
+  const { getTotalMonthlyIncome } = await import("@/db/queries/income");
+  const { getTotalMonthlyRecurring } = await import(
+    "@/db/queries/recurring-expenses"
+  );
+
+  const [projectedIncomeCents, projectedExpensesCents] = await Promise.all([
+    getTotalMonthlyIncome(),
+    getTotalMonthlyRecurring(),
+  ]);
+
+  return {
+    projectedIncomeCents,
+    projectedExpensesCents,
+    projectedNetCents: projectedIncomeCents - projectedExpensesCents,
+  };
+}
+
+export interface CashflowProjection {
+  month: string;
+  projectedIncomeCents: number;
+  projectedExpensesCents: number;
+  projectedNetCents: number;
+}
+
+/** Generate cashflow projections for the next N months */
+export async function getCashflowProjections(
+  months: number = 6,
+): Promise<CashflowProjection[]> {
+  const { projectedIncomeCents, projectedExpensesCents, projectedNetCents } =
+    await getProjectedMonthlyCashflow();
+
+  const now = new Date();
+  const projections: CashflowProjection[] = [];
+
+  for (let i = 0; i < months; i++) {
+    const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+
+    projections.push({
+      month,
+      projectedIncomeCents,
+      projectedExpensesCents,
+      projectedNetCents,
+    });
+  }
+
+  return projections;
+}
+
 // ─── Helpers ───────────────────────────────────────────
 
 /** Given "YYYY-MM", return the first day of the next month as "YYYY-MM-01" */

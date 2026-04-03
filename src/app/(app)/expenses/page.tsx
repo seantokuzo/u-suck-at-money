@@ -1,10 +1,38 @@
-export const metadata = { title: "Expenses" };
+import { getRecurringExpenses, getTotalMonthlyRecurring } from "@/db/queries/recurring-expenses";
+import { getCategories } from "@/db/queries/categories";
+import { getAccounts } from "@/db/queries/accounts";
+import { ExpensesClient } from "./expenses-client";
 
-export default function ExpensesPage() {
+export const metadata = { title: "Recurring Expenses" };
+
+export default async function ExpensesPage() {
+  const [expenses, totalMonthlyCents, allCategories, allAccounts] =
+    await Promise.all([
+      getRecurringExpenses(),
+      getTotalMonthlyRecurring(),
+      getCategories(),
+      getAccounts(),
+    ]);
+
+  // Transform categories and accounts to select options for the client
+  const categoryOptions = allCategories.map((c) => ({
+    label: c.name,
+    value: c.id,
+  }));
+
+  const accountOptions = allAccounts.map((a) => ({
+    label: a.name,
+    value: a.id,
+  }));
+
   return (
     <div className="mx-auto max-w-7xl">
-      <h1 className="text-2xl font-bold">Expenses</h1>
-      <p className="mt-2 text-zinc-400">Coming soon.</p>
+      <ExpensesClient
+        initialExpenses={expenses}
+        initialTotalMonthlyCents={totalMonthlyCents}
+        categories={categoryOptions}
+        accounts={accountOptions}
+      />
     </div>
   );
 }
