@@ -1,10 +1,25 @@
+import {
+  getCategoryBudgetVsActual,
+  getMonthlySnapshot,
+} from "@/db/queries/dashboard";
+import { currentMonth } from "@/lib/utils";
+import { BudgetClient } from "./budget-client";
+
 export const metadata = { title: "Budget" };
 
-export default function BudgetPage() {
+export default async function BudgetPage() {
+  const month = currentMonth();
+
+  const [categories, snapshot] = await Promise.all([
+    getCategoryBudgetVsActual(month),
+    getMonthlySnapshot(month),
+  ]);
+
   return (
-    <div className="mx-auto max-w-7xl">
-      <h1 className="text-2xl font-bold">Budget</h1>
-      <p className="mt-2 text-zinc-400">Coming soon.</p>
-    </div>
+    <BudgetClient
+      categories={categories}
+      totalIncomeCents={snapshot?.totalIncomeCents ?? 0}
+      totalExpensesCents={snapshot?.totalExpensesCents ?? 0}
+    />
   );
 }
